@@ -1,26 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Unity, useUnityContext } from 'react-unity-webgl';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { getFirestore, doc, setDoc, onSnapshot } from 'firebase/firestore';
-import { FaCog, FaSatelliteDish, FaSun, FaMoon, FaPaperPlane, FaHome } from 'react-icons/fa';
+import { auth, db } from './firebase';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { FaSatelliteDish, FaSun, FaMoon, FaPaperPlane, FaHome, FaChartLine, FaBriefcase, FaUsers, FaCog } from 'react-icons/fa';
 import { IoIosArrowBack } from 'react-icons/io';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Routes, Route } from 'react-router-dom';
+import Login from './Login';
 import './App.css';
-
-// Replace with YOUR Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyCt98vHVRiQS1h-GWKfklN2TyM1PsNpDAM",
-  authDomain: "waveco-bluewaves.firebaseapp.com",
-  projectId: "waveco-bluewaves",
-  storageBucket: "waveco-bluewaves.appspot.com",
-  messagingSenderId: "797425086005",
-  appId: "1:797425086005:web:ae1a35fc83c6157747cb7c"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
 
 function App() {
   const navigate = useNavigate();
@@ -41,12 +28,19 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [influence, setInfluence] = useState(0);
-  const [systemPool, setSystemPool] = useState(0);
   const [activeTab, setActiveTab] = useState(null);
   const [socialSubTab, setSocialSubTab] = useState('chats');
   const [chatSection, setChatSection] = useState('friends');
   const [voiceMessage, setVoiceMessage] = useState(null);
   const [storyContent, setStoryContent] = useState('');
+  const [realName, setRealName] = useState('');
+  const [dob, setDob] = useState('');
+  const [gender, setGender] = useState('');
+  const [username, setUsername] = useState('');
+  const [country, setCountry] = useState('');
+
+  const profilePanelRef = useRef(null);
+  const chatPanelRef = useRef(null);
 
   const { unityProvider } = useUnityContext({
     loaderUrl: '/unity/Build/WAVECO-WebGL.loader.js',
@@ -68,14 +62,16 @@ function App() {
             setInfluence(data.influence || 0);
             setProfilePic(data.profilePic || null);
             setTheme(data.theme || 'dark');
+            setDisplayName(data.username || `@${user.email.split('@')[0]}`);
           }
         }, (error) => console.error('Firestore error:', error));
       } else {
         setUser(null);
+        navigate('/login');
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (user) {
@@ -91,21 +87,43 @@ function App() {
     }
   }, [user]);
 
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (profilePanelRef.current && !profilePanelRef.current.contains(event.target)) {
+        setIsPanelOpen(false);
+      }
+      if (chatPanelRef.current && !chatPanelRef.current.contains(event.target)) {
+        setIsChatOpen(false);
+      }
+    };
+    if (isPanelOpen || isChatOpen) {
+      document.addEventListener('click', handleOutsideClick);
+    }
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, [isPanelOpen, isChatOpen]);
+
   const handleSignup = async () => {
-    if (!email || !password) {
-      alert('Please enter email and password');
+    if (!email || !password || !realName || !dob || !gender || !username || !country) {
+      alert('Please fill out all fields');
       return;
     }
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       setUser(user);
-      setDisplayName(`@${email.split('@')[0]}`);
+      setDisplayName(username);
       await setDoc(doc(db, 'users', user.uid), {
+        realName,
+        dob,
+        gender,
+        username,
+        country,
+        email: user.email,
         walletBalance: 500,
         influence: 0,
         theme: 'dark',
-        displayName: `@${email.split('@')[0]}`
+        displayName: username,
+        createdAt: new Date().toISOString()
       });
       console.log('Signup success:', user.email);
     } catch (error) {
@@ -125,31 +143,23 @@ function App() {
       const docSnap = await onSnapshot(userDoc, (snap) => snap.exists());
       if (!docSnap) {
         await setDoc(userDoc, {
+          realName: user.displayName || 'Unknown',
+          dob: '',
+          gender: '',
+          username: `@${user.email.split('@')[0]}`,
+          country: '',
+          email: user.email,
           walletBalance: 500,
           influence: 0,
           theme: 'dark',
-          displayName: user.displayName || `@${user.email.split('@')[0]}`
+          displayName: user.displayName || `@${user.email.split('@')[0]}`,
+          createdAt: new Date().toISOString()
         });
       }
       console.log('Google signup success:', user.email);
     } catch (error) {
       console.error('Google signup error:', error.code, error.message);
       alert(`Google signup failed: ${error.message}`);
-    }
-  };
-
-  const handleLogin = async () => {
-    if (!email || !password) {
-      alert('Please enter email and password');
-      return;
-    }
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      setUser(userCredential.user);
-      console.log('Login success:', userCredential.user.email);
-    } catch (error) {
-      console.error('Login error:', error.code, error.message);
-      alert(`Login failed: ${error.message}`);
     }
   };
 
@@ -226,7 +236,7 @@ function App() {
     const newName = prompt('New name:', displayName);
     if (newName && user) {
       setDisplayName(newName);
-      setDoc(doc(db, 'users', user.uid), { displayName: newName }, { merge: true });
+      setDoc(doc(db, 'users', user.uid), { displayName: newName, username: newName }, { merge: true });
     }
   };
 
@@ -254,214 +264,272 @@ function App() {
     }
   };
 
-  const handleAchievement = () => {
-    if (user) {
-      setWalletBalance(prev => prev + 50);
-      setInfluence(prev => prev + 5);
-      setDoc(doc(db, 'users', user.uid), { walletBalance: walletBalance + 50, influence: influence + 5 }, { merge: true });
-    }
-  };
-
   const showBackButton = activeTab || mode;
 
-  return (
+  const signupPage = (
     <div className={`app ${theme}`}>
       <header className={`header ${theme}`}>
-        <button className={`menu-btn ${theme}`} onClick={() => setIsPanelOpen(!isPanelOpen)}><FaCog /></button>
-        <h1><span className="wav">wav</span><span className={`eco ${theme}`}>Eco</span></h1>
+        <h1 className="waveco-title"><span className="wav">wav</span><span className={`eco ${theme}`}>Eco</span></h1>
+      </header>
+      <main className="dashboard">
+        <div className="signup">
+          <h2>Create Your WAVECoin Account</h2>
+          <input
+            type="text"
+            value={realName}
+            onChange={(e) => setRealName(e.target.value)}
+            placeholder="Full Name"
+            className={`signup-input ${theme}`}
+          />
+          <input
+            type="date"
+            value={dob}
+            onChange={(e) => setDob(e.target.value)}
+            className={`signup-input ${theme}`}
+          />
+          <select
+            value={gender}
+            onChange={(e) => setGender(e.target.value)}
+            className={`signup-input ${theme}`}
+          >
+            <option value="">Select Gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Username"
+            className={`signup-input ${theme}`}
+          />
+          <input
+            type="text"
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            placeholder="Country"
+            className={`signup-input ${theme}`}
+          />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            className={`signup-input ${theme}`}
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            className={`signup-input ${theme}`}
+          />
+          <button className="action-btn" onClick={handleSignup}>Sign Up with Email</button>
+          <button className="action-btn" onClick={handleGoogleSignup}>Sign Up with Google</button>
+          <p>Already have an account? <button className="action-btn" onClick={() => navigate('/login')}>Log In</button></p>
+          <p>Sign up to get 500 WAVECoin (WC) in your wallet!</p>
+        </div>
+      </main>
+    </div>
+  );
+
+  const dashboardPage = (
+    <div className={`app ${theme}`}>
+      <header className={`header ${theme}`}>
+        <h1 className="waveco-title"><span className="wav">wav</span><span className={`eco ${theme}`}>Eco</span></h1>
         {user && (
-          <button className={`feed-btn ${theme}`} onClick={() => setIsFeedOpen(!isFeedOpen)}><FaSatelliteDish /></button>
+          <>
+            <button className={`feed-btn ${theme}`} onClick={() => setIsFeedOpen(!isFeedOpen)}><FaSatelliteDish /></button>
+            <img
+              src={profilePic || '[A]'}
+              alt="Profile"
+              className="header-profile-pic"
+              onClick={() => {
+                console.log('Panel toggled:', !isPanelOpen); // Debug toggle
+                setIsPanelOpen(!isPanelOpen);
+              }}
+            />
+          </>
         )}
       </header>
       <main className="dashboard">
         {showBackButton && (
-          <IoIosArrowBack className="back-arrow" onClick={() => {
+          <IoIosArrowBack className={`back-arrow ${theme}`} onClick={() => {
             setActiveTab(null);
             setMode(null);
           }} />
         )}
-        {!user ? (
-          <div className="signup">
-            <h2>Create Your WAVECoin Account</h2>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email"
-              className={`signup-input ${theme}`}
-            />
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              className={`signup-input ${theme}`}
-            />
-            <button className="action-btn" onClick={handleSignup}>Sign Up with Email</button>
-            <button className="action-btn" onClick={handleGoogleSignup}>Sign Up with Google</button>
-            <p>Already have an account? <button className="action-btn" onClick={handleLogin}>Log In</button></p>
-            <p>Sign up to get 500 WAVECoin (WC) in your wallet!</p>
+        {!activeTab ? (
+          <div className="economic-tabs">
+            <span className={`tab-section ${theme}`} onClick={() => setActiveTab('home')}>
+              <FaHome className="tab-icon" /> Home
+            </span>
+            <span className={`tab-section ${theme}`} onClick={() => setActiveTab('markets')}>
+              <FaChartLine className="tab-icon" /> Markets
+            </span>
+            <span className={`tab-section ${theme}`} onClick={() => { setActiveTab('work'); setMode('work'); }}>
+              <FaBriefcase className="tab-icon" /> Work
+            </span>
+            <span className={`tab-section ${theme}`} onClick={() => { setActiveTab('social'); setMode('social'); }}>
+              <FaUsers className="tab-icon" /> Social
+            </span>
           </div>
-        ) : (
-          <>
-            {!activeTab ? (
-              <div className="economic-tabs">
-                <span className={`tab-section ${theme}`} onClick={() => setActiveTab('home')}>Home</span>
-                <span className={`tab-section ${theme}`} onClick={() => setActiveTab('markets')}>Markets</span>
-                <span className={`tab-section ${theme}`} onClick={() => { setActiveTab('work'); setMode('work'); }}>Work</span>
-                <span className={`tab-section ${theme}`} onClick={() => { setActiveTab('social'); setMode('social'); }}>Social</span>
-              </div>
-            ) : null}
-            {activeTab === 'home' && !mode && (
-              <div className={`welcome ${theme}`}>
-                <h2>Home</h2>
-                <p>WC: {walletBalance.toFixed(2)} | Inf: {influence}</p>
-              </div>
-            )}
-            {activeTab === 'markets' && !mode && (
-              <div className={`welcome ${theme}`}>
-                <h2>Markets</h2>
-                <p>WC: {walletBalance.toFixed(2)} | Inf: {influence}</p>
-                <p>Buy/Sell WC</p>
-              </div>
-            )}
-            {activeTab === 'work' && mode === 'work' && (
-              <div className={`work-mode ${theme}`}>
-                <h2>Work</h2>
-                <button className="action-btn" onClick={() => setMode('stream')}>Stream</button>
-                <button className="action-btn" onClick={handleTask}>Task (+10)</button>
-                <button className="action-btn" onClick={handleKnowledgeGame}>Solve (+20)</button>
-                <button className={`action-btn back-btn ${theme}`} onClick={() => setMode(null)}><IoIosArrowBack /></button>
-              </div>
-            )}
-            {activeTab === 'social' && mode === 'social' && (
-              <div className={`social-mode ${theme}`}>
-                <h2>Social</h2>
-                <div className="social-sub-tabs">
-                  <span className={`social-section ${socialSubTab === 'chats' ? 'active' : ''}`} onClick={() => setSocialSubTab('chats')}>
-                    Chats
-                  </span>
-                  <span className={`social-section ${socialSubTab === 'calls' ? 'active' : ''}`} onClick={() => setSocialSubTab('calls')}>
-                    Calls
-                  </span>
-                  <span className={`social-section ${socialSubTab === 'stories' ? 'active' : ''}`} onClick={() => setSocialSubTab('stories')}>
-                    Stories
-                  </span>
-                </div>
-                {socialSubTab === 'chats' ? (
-                  <div className="chats-section">
-                    <div className="chat-sub-sections">
-                      <span className={`chat-section ${chatSection === 'friends' ? 'active' : ''}`} onClick={() => setChatSection('friends')}>
-                        Friends
-                      </span>
-                      <span className={`chat-section ${chatSection === 'communities' ? 'active' : ''}`} onClick={() => setChatSection('communities')}>
-                        Communities
-                      </span>
-                      <span className={`chat-section ${chatSection === 'global' ? 'active' : ''}`} onClick={() => setChatSection('global')}>
-                        Global
-                      </span>
-                    </div>
-                    {chatSection === 'friends' && (
-                      <div>
-                        <button className="action-btn" onClick={() => setIsChatOpen(true)}>Friend Chat</button>
-                      </div>
-                    )}
-                    {chatSection === 'communities' && (
-                      <div>
-                        <button className="action-btn" onClick={() => setIsFeedOpen(true)}>Community Feed</button>
-                      </div>
-                    )}
-                    {chatSection === 'global' && (
-                      <div>
-                        <button className="action-btn" onClick={handleFileShare}>Share File (+5)</button>
-                        <button className="action-btn" onClick={handleLocationShare}>Share Location (+3)</button>
-                        <button className="action-btn" onClick={handleVoiceMessage}>
-                          Voice Msg {voiceMessage || '(+5)'}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : socialSubTab === 'calls' ? (
-                  <div className="calls-section">
-                    <button className="action-btn" onClick={() => handleCall('Voice')}>Voice Call (+10)</button>
-                    <button className="action-btn" onClick={() => handleCall('Video')}>Video Call (+10)</button>
-                    <button className="action-btn" onClick={() => handleCall('Group Video')}>Group Video (+10)</button>
-                  </div>
-                ) : socialSubTab === 'stories' ? (
-                  <div className="stories-section">
-                    <input
-                      value={storyContent}
-                      onChange={(e) => setStoryContent(e.target.value)}
-                      placeholder="New Story... (+10)"
-                      className={`post-input ${theme}`}
-                    />
-                    <button className="action-btn" onClick={handleNewStory}>Post Story</button>
-                  </div>
-                ) : null}
-              </div>
-            )}
-            {mode === 'stream' && (
-              <div className={`unity-container ${theme}`}>
-                <h2>Stream</h2>
-                <Unity unityProvider={unityProvider} style={{ width: '100%', height: '100%' }} />
-                <button className={`action-btn back-btn ${theme}`} onClick={() => setMode(null)}><IoIosArrowBack /></button>
-              </div>
-            )}
-            {activeTab && (
-              <div className="home-icon" onClick={() => {
-                setActiveTab(null);
-                setMode(null);
-                setIsPanelOpen(false);
-                setIsFeedOpen(false);
-                setIsChatOpen(false);
-              }}>
-                <span className={`home-icon-inner ${theme}`}><FaHome /></span>
-              </div>
-            )}
-          </>
+        ) : null}
+        {activeTab === 'home' && !mode && (
+          <div className={`welcome ${theme}`}>
+            <h2>Welcome, {displayName}!</h2>
+            <div className="stats-card">
+              <p>Wallet: {walletBalance.toFixed(2)} WC</p>
+              <p>Influence: {influence}</p>
+            </div>
+          </div>
         )}
-        {user && (
-          <div className={`slide-panel ${isPanelOpen ? 'open' : ''} ${theme}`}>
-            <div className="panel-header">
-              <button className={`action-btn back-btn ${theme}`} onClick={() => setIsPanelOpen(false)}><IoIosArrowBack /></button>
-              <span
-                className={`theme-icon ${theme}`}
-                onClick={() => {
-                  const newTheme = theme === 'dark' ? 'light' : 'dark';
-                  setTheme(newTheme);
-                  setDoc(doc(db, 'users', user.uid), { theme: newTheme }, { merge: true });
-                }}
-              >
-                {theme === 'dark' ? <FaSun /> : <FaMoon />}
+        {activeTab === 'markets' && !mode && (
+          <div className={`markets ${theme}`}>
+            <h2>Markets</h2>
+            <div className="stats-card">
+              <p>Wallet: {walletBalance.toFixed(2)} WC</p>
+              <p>Influence: {influence}</p>
+              <button className="action-btn">Buy WC</button>
+              <button className="action-btn">Sell WC</button>
+            </div>
+          </div>
+        )}
+        {activeTab === 'work' && mode === 'work' && (
+          <div className={`work-mode ${theme}`}>
+            <h2>Work</h2>
+            <button className="action-btn" onClick={() => setMode('stream')}>Stream</button>
+            <button className="action-btn" onClick={handleTask}>Task (+10)</button>
+            <button className="action-btn" onClick={handleKnowledgeGame}>Solve (+20)</button>
+            <button className={`action-btn back-btn ${theme}`} onClick={() => setMode(null)}><IoIosArrowBack /></button>
+          </div>
+        )}
+        {activeTab === 'social' && mode === 'social' && (
+          <div className={`social-mode ${theme}`}>
+            <h2>Social</h2>
+            <div className="social-sub-tabs">
+              <span className={`social-section ${socialSubTab === 'chats' ? 'active' : ''} ${theme}`} onClick={() => setSocialSubTab('chats')}>
+                Chats
+              </span>
+              <span className={`social-section ${socialSubTab === 'calls' ? 'active' : ''} ${theme}`} onClick={() => setSocialSubTab('calls')}>
+                Calls
+              </span>
+              <span className={`social-section ${socialSubTab === 'stories' ? 'active' : ''} ${theme}`} onClick={() => setSocialSubTab('stories')}>
+                Stories
               </span>
             </div>
-            <div className={`panel-content ${theme}`}>
-              <img src={profilePic || '[A]'} alt="Profile" className="profile-pic" />
-              <input type="file" accept="image/*" onChange={handlePicUpload} className={`pic-upload ${theme}`} />
-              <h2>{displayName}</h2>
-              <p>WC: {walletBalance.toFixed(2)} | Inf: {influence}</p>
-              <div className="info-grid">
-                <div className={`info-item ${theme}`} onClick={() => setExpandedTab(expandedTab === 'wallet' ? null : 'wallet')}>
-                  <span className="icon">W</span>
-                  {expandedTab === 'wallet' && (
-                    <div className={`info-details ${theme}`}>
-                      <p>{walletBalance.toFixed(2)} WC</p>
-                      <button className="action-btn" onClick={handleSendWC}>Send</button>
-                    </div>
-                  )}
+            {socialSubTab === 'chats' ? (
+              <div className="chats-section">
+                <div className="chat-sub-sections">
+                  <span className={`chat-section ${chatSection === 'friends' ? 'active' : ''} ${theme}`} onClick={() => setChatSection('friends')}>
+                    Friends
+                  </span>
+                  <span className={`chat-section ${chatSection === 'communities' ? 'active' : ''} ${theme}`} onClick={() => setChatSection('communities')}>
+                    Communities
+                  </span>
+                  <span className={`chat-section ${chatSection === 'global' ? 'active' : ''} ${theme}`} onClick={() => setChatSection('global')}>
+                    Global
+                  </span>
                 </div>
-                <div className={`info-item ${theme}`} onClick={() => setExpandedTab(expandedTab === 'assets' ? null : 'assets')}>
-                  <span className="icon">A</span>
-                  {expandedTab === 'assets' && <div className={`info-details ${theme}`}><p>1 Land</p></div>}
-                </div>
+                {chatSection === 'friends' && (
+                  <div>
+                    <button className="action-btn" onClick={() => setIsChatOpen(true)}>Friend Chat</button>
+                  </div>
+                )}
+                {chatSection === 'communities' && (
+                  <div>
+                    <button className="action-btn" onClick={() => setIsFeedOpen(true)}>Community Feed</button>
+                  </div>
+                )}
+                {chatSection === 'global' && (
+                  <div>
+                    <button className="action-btn" onClick={handleFileShare}>Share File (+5)</button>
+                    <button className="action-btn" onClick={handleLocationShare}>Share Location (+3)</button>
+                    <button className="action-btn" onClick={handleVoiceMessage}>
+                      Voice Msg {voiceMessage || '(+5)'}
+                    </button>
+                  </div>
+                )}
               </div>
-              <button className="action-btn" onClick={handleEditProfile}>Edit</button>
-              <button className="action-btn" onClick={handleLogout}>Logout</button>
-            </div>
+            ) : socialSubTab === 'calls' ? (
+              <div className="calls-section">
+                <button className="action-btn" onClick={() => handleCall('Voice')}>Voice Call (+10)</button>
+                <button className="action-btn" onClick={() => handleCall('Video')}>Video Call (+10)</button>
+                <button className="action-btn" onClick={() => handleCall('Group Video')}>Group Video (+10)</button>
+              </div>
+            ) : socialSubTab === 'stories' ? (
+              <div className="stories-section">
+                <input
+                  value={storyContent}
+                  onChange={(e) => setStoryContent(e.target.value)}
+                  placeholder="New Story... (+10)"
+                  className={`post-input ${theme}`}
+                />
+                <button className="action-btn" onClick={handleNewStory}>Post Story</button>
+              </div>
+            ) : null}
+          </div>
+        )}
+        {mode === 'stream' && (
+          <div className={`unity-container ${theme}`}>
+            <h2>Stream</h2>
+            <Unity unityProvider={unityProvider} style={{ width: '100%', height: '100%' }} />
+            <button className={`action-btn back-btn ${theme}`} onClick={() => setMode(null)}><IoIosArrowBack /></button>
+          </div>
+        )}
+        {activeTab && (
+          <div className="home-icon" onClick={() => {
+            setActiveTab(null);
+            setMode(null);
+            setIsPanelOpen(false);
+            setIsFeedOpen(false);
+            setIsChatOpen(false);
+          }}>
+            <span className={`home-icon-inner ${theme}`}><FaHome /></span>
           </div>
         )}
         {user && (
           <>
+            <div ref={profilePanelRef} className={`slide-panel ${isPanelOpen ? 'open' : ''} ${theme}`}>
+              <div className="panel-header">
+                <button className={`action-btn back-btn ${theme}`} onClick={() => setIsPanelOpen(false)}><IoIosArrowBack /></button>
+                <FaCog className={`gear-icon ${theme}`} onClick={() => console.log('Settings TBD')} />
+                <span
+                  className={`theme-icon ${theme}`}
+                  onClick={() => {
+                    const newTheme = theme === 'dark' ? 'light' : 'dark';
+                    setTheme(newTheme);
+                    setDoc(doc(db, 'users', user.uid), { theme: newTheme }, { merge: true });
+                  }}
+                >
+                  {theme === 'dark' ? <FaSun /> : <FaMoon />}
+                </span>
+              </div>
+              <div className={`panel-content ${theme}`}>
+                <img src={profilePic || '[A]'} alt="Profile" className="profile-pic" />
+                <input type="file" accept="image/*" onChange={handlePicUpload} className={`pic-upload ${theme}`} />
+                <h2>{displayName}</h2>
+                <p>WC: {walletBalance.toFixed(2)} | Inf: {influence}</p>
+                <div className="info-grid">
+                  <div className={`info-item ${theme}`} onClick={() => setExpandedTab(expandedTab === 'wallet' ? null : 'wallet')}>
+                    <span className="icon">W</span>
+                    {expandedTab === 'wallet' && (
+                      <div className={`info-details ${theme}`}>
+                        <p>{walletBalance.toFixed(2)} WC</p>
+                        <button className="action-btn" onClick={handleSendWC}>Send</button>
+                      </div>
+                    )}
+                  </div>
+                  <div className={`info-item ${theme}`} onClick={() => setExpandedTab(expandedTab === 'assets' ? null : 'assets')}>
+                    <span className="icon">A</span>
+                    {expandedTab === 'assets' && <div className={`info-details ${theme}`}><p>1 Land</p></div>}
+                  </div>
+                </div>
+                <button className="action-btn" onClick={handleEditProfile}>Edit</button>
+                <button className="action-btn" onClick={handleLogout}>Logout</button>
+              </div>
+            </div>
             <div className={`feed-panel ${isFeedOpen ? 'open' : ''} ${theme}`}>
               <div className="feed-header">
                 <button className={`action-btn back-btn ${theme}`} onClick={() => setIsFeedOpen(false)}><IoIosArrowBack /></button>
@@ -481,7 +549,7 @@ function App() {
                 ))}
               </div>
             </div>
-            <div className={`chat-panel ${isChatOpen ? 'open' : ''} ${theme}`}>
+            <div ref={chatPanelRef} className={`chat-panel ${isChatOpen ? 'open' : ''} ${theme}`}>
               <div className="chat-header">
                 <button className={`action-btn back-btn ${theme}`} onClick={() => setIsChatOpen(false)}><IoIosArrowBack /></button>
               </div>
@@ -507,6 +575,13 @@ function App() {
         )}
       </main>
     </div>
+  );
+
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/" element={user ? dashboardPage : signupPage} />
+    </Routes>
   );
 }
 
