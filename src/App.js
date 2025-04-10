@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Unity, useUnityContext } from 'react-unity-webgl';
 import { auth, db } from './firebase';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
-import { FaSatelliteDish, FaSun, FaMoon, FaPaperPlane, FaHome, FaChartLine, FaBriefcase, FaUsers, FaCog } from 'react-icons/fa';
+import { FaSatelliteDish, FaSun, FaMoon, FaPaperPlane, FaChartLine, FaBriefcase, FaUsers, FaCog, FaBell, FaVideo, FaGlobe, FaUserFriends, FaLock, FaPlusSquare, FaSearch, FaBookOpen, FaComment } from 'react-icons/fa';
 import { IoIosArrowBack } from 'react-icons/io';
 import { useNavigate, Routes, Route } from 'react-router-dom';
-import Login from './Login';
 import './App.css';
 
 function App() {
@@ -29,15 +28,17 @@ function App() {
   const [newMessage, setNewMessage] = useState('');
   const [influence, setInfluence] = useState(0);
   const [activeTab, setActiveTab] = useState(null);
-  const [socialSubTab, setSocialSubTab] = useState('chats');
-  const [chatSection, setChatSection] = useState('friends');
-  const [voiceMessage, setVoiceMessage] = useState(null);
+  const [socialSubTab, setSocialSubTab] = useState('reels');
   const [storyContent, setStoryContent] = useState('');
+  const [notifications, setNotifications] = useState([]);
+  const [chatFriend, setChatFriend] = useState(null);
   const [realName, setRealName] = useState('');
   const [dob, setDob] = useState('');
   const [gender, setGender] = useState('');
   const [username, setUsername] = useState('');
   const [country, setCountry] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState({ videos: [], friends: [], social: [] });
 
   const profilePanelRef = useRef(null);
   const chatPanelRef = useRef(null);
@@ -63,11 +64,15 @@ function App() {
             setProfilePic(data.profilePic || null);
             setTheme(data.theme || 'dark');
             setDisplayName(data.username || `@${user.email.split('@')[0]}`);
+            setRealName(data.realName || '');
+            setDob(data.dob || '');
+            setGender(data.gender || '');
+            setCountry(data.country || '');
           }
         }, (error) => console.error('Firestore error:', error));
       } else {
         setUser(null);
-        navigate('/login');
+        navigate('/signup');
       }
     });
     return () => unsubscribe();
@@ -80,6 +85,7 @@ function App() {
       ws.onmessage = (event) => {
         const msg = JSON.parse(event.data);
         setMessages(prev => [msg, ...prev]);
+        setNotifications(prev => [`New message from ${msg.user}`, ...prev]);
       };
       ws.onerror = (error) => console.error('WebSocket error:', error);
       ws.onclose = () => console.log('WebSocket disconnected');
@@ -113,19 +119,9 @@ function App() {
       setUser(user);
       setDisplayName(username);
       await setDoc(doc(db, 'users', user.uid), {
-        realName,
-        dob,
-        gender,
-        username,
-        country,
-        email: user.email,
-        walletBalance: 500,
-        influence: 0,
-        theme: 'dark',
-        displayName: username,
-        createdAt: new Date().toISOString()
+        realName, dob, gender, username, country, email: user.email, walletBalance: 500, influence: 0, theme: 'dark', displayName: username, createdAt: new Date().toISOString()
       });
-      console.log('Signup success:', user.email);
+      navigate('/');
     } catch (error) {
       console.error('Signup error:', error.code, error.message);
       alert(`Signup failed: ${error.message}`);
@@ -143,23 +139,37 @@ function App() {
       const docSnap = await onSnapshot(userDoc, (snap) => snap.exists());
       if (!docSnap) {
         await setDoc(userDoc, {
-          realName: user.displayName || 'Unknown',
-          dob: '',
-          gender: '',
-          username: `@${user.email.split('@')[0]}`,
-          country: '',
-          email: user.email,
-          walletBalance: 500,
-          influence: 0,
-          theme: 'dark',
-          displayName: user.displayName || `@${user.email.split('@')[0]}`,
-          createdAt: new Date().toISOString()
+          realName: user.displayName || 'Unknown', dob: '', gender: '', username: `@${user.email.split('@')[0]}`, country: '', email: user.email, walletBalance: 500, influence: 0, theme: 'dark', displayName: user.displayName || `@${user.email.split('@')[0]}`, createdAt: new Date().toISOString()
         });
       }
-      console.log('Google signup success:', user.email);
+      navigate('/');
     } catch (error) {
       console.error('Google signup error:', error.code, error.message);
       alert(`Google signup failed: ${error.message}`);
+    }
+  };
+
+  const handleLogin = async () => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate('/');
+    } catch (error) {
+      console.error('Login error:', error.code, error.message);
+      alert(`Login failed: ${error.message}`);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      alert('Please enter your email');
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      alert('Password reset email sent!');
+    } catch (error) {
+      console.error('Forgot password error:', error.code, error.message);
+      alert(`Failed: ${error.message}`);
     }
   };
 
@@ -170,57 +180,38 @@ function App() {
 
   const handleNewPost = () => {
     if (newPost.trim() && user) {
-      setPosts([{ id: Date.now(), user: displayName, text: newPost, time: 'Now' }, ...posts]);
+      setPosts([{ id: Date.now(), user: displayName, text: newPost, timestamp: new Date().toISOString(), likes: 0, comments: [] }, ...posts]);
       setWalletBalance(prev => prev + 5);
       setInfluence(prev => prev + 1);
+      setNotifications(prev => ['New post added', ...prev]);
       setNewPost('');
     }
   };
 
   const handleNewMessage = () => {
-    if (newMessage.trim() && user) {
-      const msg = { id: Date.now(), user: displayName, text: newMessage, time: 'Now', encrypted: true };
-      const ws = new WebSocket('wss://waveco-bluewaves.glitch.me/chat');
-      ws.onopen = () => {
-        ws.send(JSON.stringify(msg));
-        setMessages(prev => [msg, ...prev]);
-        setWalletBalance(prev => prev + 3);
-        setNewMessage('');
-        ws.close();
-      };
+    if (newMessage.trim() && user && chatFriend) {
+      const msg = { id: Date.now(), user: displayName, text: newMessage, timestamp: new Date().toISOString(), to: chatFriend, type: socialSubTab === 'private' ? 'private' : 'public' };
+      setMessages(prev => [msg, ...prev]);
+      setWalletBalance(prev => prev + 3);
+      setNotifications(prev => [`Message sent to ${chatFriend}`, ...prev]);
+      setNewMessage('');
     }
-  };
-
-  const handleVoiceMessage = () => {
-    setVoiceMessage('Recording...');
-    setTimeout(() => {
-      setVoiceMessage('Voice message sent');
-      setWalletBalance(prev => prev + 5);
-    }, 2000);
-  };
-
-  const handleCall = (type) => {
-    alert(`${type} call started`);
-    setWalletBalance(prev => prev + 10);
-    setInfluence(prev => prev + 2);
-  };
-
-  const handleFileShare = () => {
-    alert('File shared');
-    setWalletBalance(prev => prev + 5);
-  };
-
-  const handleLocationShare = () => {
-    alert('Location shared');
-    setWalletBalance(prev => prev + 3);
   };
 
   const handleNewStory = () => {
     if (storyContent.trim()) {
       alert(`Story posted: ${storyContent}`);
       setWalletBalance(prev => prev + 10);
+      setNotifications(prev => ['Story posted', ...prev]);
       setStoryContent('');
     }
+  };
+
+  const handleSearch = () => {
+    if (!searchQuery.trim()) return;
+    const aiResponse = { videos: [`Video: ${searchQuery}`], friends: [`Friend: ${searchQuery}`], social: [`Post: ${searchQuery}`] };
+    setSearchResults(aiResponse);
+    setNotifications(prev => [`Searched: ${searchQuery}`, ...prev]);
   };
 
   const handlePicUpload = (e) => {
@@ -245,6 +236,7 @@ function App() {
     if (amount && amount <= walletBalance && user) {
       setWalletBalance(prev => prev - amount);
       setDoc(doc(db, 'users', user.uid), { walletBalance: walletBalance - amount }, { merge: true });
+      setNotifications(prev => [`Sent ${amount} WC`, ...prev]);
     }
   };
 
@@ -269,66 +261,50 @@ function App() {
   const signupPage = (
     <div className={`app ${theme}`}>
       <header className={`header ${theme}`}>
-        <h1 className="waveco-title"><span className="wav">wav</span><span className={`eco ${theme}`}>Eco</span></h1>
+        <h1 className="waveco-title" onClick={() => navigate('/login')}><span className="wav">wav</span><span className={`eco ${theme}`}>Eco</span></h1>
       </header>
       <main className="dashboard">
         <div className="signup">
-          <h2>Create Your WAVECoin Account</h2>
-          <input
-            type="text"
-            value={realName}
-            onChange={(e) => setRealName(e.target.value)}
-            placeholder="Full Name"
-            className={`signup-input ${theme}`}
-          />
-          <input
-            type="date"
-            value={dob}
-            onChange={(e) => setDob(e.target.value)}
-            className={`signup-input ${theme}`}
-          />
-          <select
-            value={gender}
-            onChange={(e) => setGender(e.target.value)}
-            className={`signup-input ${theme}`}
-          >
-            <option value="">Select Gender</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Username"
-            className={`signup-input ${theme}`}
-          />
-          <input
-            type="text"
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            placeholder="Country"
-            className={`signup-input ${theme}`}
-          />
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            className={`signup-input ${theme}`}
-          />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            className={`signup-input ${theme}`}
-          />
-          <button className="action-btn" onClick={handleSignup}>Sign Up with Email</button>
-          <button className="action-btn" onClick={handleGoogleSignup}>Sign Up with Google</button>
-          <p>Already have an account? <button className="action-btn" onClick={() => navigate('/login')}>Log In</button></p>
-          <p>Sign up to get 500 WAVECoin (WC) in your wallet!</p>
+          <h2 className="futuristic-title">Initialize Your WAVECoin Identity</h2>
+          <div className="signup-form">
+            <input type="text" value={realName} onChange={(e) => setRealName(e.target.value)} placeholder="Full Name" className={`futuristic-input ${theme}`} />
+            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" className={`futuristic-input ${theme}`} />
+            <select value={gender} onChange={(e) => setGender(e.target.value)} className={`futuristic-input ${theme}`}>
+              <option value="">Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+            <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className={`futuristic-input ${theme}`} />
+            <input type="text" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="Country" className={`futuristic-input ${theme}`} />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className={`futuristic-input ${theme}`} />
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className={`futuristic-input ${theme}`} />
+            <button className="futuristic-btn" onClick={handleSignup}>Activate Profile</button>
+            <button className="futuristic-btn" onClick={handleGoogleSignup}>Sync with Google</button>
+          </div>
+          <p className="futuristic-text">Already synced? <span onClick={() => { console.log('Navigating to /login'); navigate('/login'); }} className="link">Sign In</span></p>
+          <p className="futuristic-text">Gain 500 WAVECoin (WC) upon activation!</p>
+        </div>
+      </main>
+    </div>
+  );
+
+  const loginPage = (
+    <div className={`app ${theme}`}>
+      <header className={`header ${theme}`}>
+        <h1 className="waveco-title" onClick={() => navigate('/signup')}><span className="wav">wav</span><span className={`eco ${theme}`}>Eco</span></h1>
+      </header>
+      <main className="dashboard">
+        <div className="signup">
+          <h2 className="futuristic-title">Sign In to WAVECoin Network</h2>
+          <div className="signup-form">
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className={`futuristic-input ${theme}`} />
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className={`futuristic-input ${theme}`} />
+            <button className="futuristic-btn" onClick={handleLogin}>Sign In</button>
+            <button className="futuristic-btn" onClick={handleGoogleSignup}>Sync with Google</button>
+          </div>
+          <p className="futuristic-text"><span onClick={handleForgotPassword} className="link">Reset Access Code</span></p>
+          <p className="futuristic-text">New entity? <span onClick={() => navigate('/signup')} className="link">Initialize Now</span></p>
         </div>
       </main>
     </div>
@@ -337,20 +313,27 @@ function App() {
   const dashboardPage = (
     <div className={`app ${theme}`}>
       <header className={`header ${theme}`}>
-        <h1 className="waveco-title"><span className="wav">wav</span><span className={`eco ${theme}`}>Eco</span></h1>
+        <h1 className="waveco-title" onClick={() => { setActiveTab(null); setMode(null); }}><span className="wav">wav</span><span className={`eco ${theme}`}>Eco</span></h1>
         {user && (
-          <>
+          <div className="header-right">
+            <FaBell className={`theme-icon ${theme}`} onClick={() => alert(notifications.join('\n'))} />
+            <div className="search-bar">
+              <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Quantum Search..." className={`futuristic-input ${theme}`} />
+              <FaSearch className={`theme-icon ${theme}`} onClick={handleSearch} />
+            </div>
             <button className={`feed-btn ${theme}`} onClick={() => setIsFeedOpen(!isFeedOpen)}><FaSatelliteDish /></button>
-            <img
-              src={profilePic || '[A]'}
-              alt="Profile"
-              className="header-profile-pic"
-              onClick={() => {
-                console.log('Panel toggled:', !isPanelOpen); // Debug toggle
-                setIsPanelOpen(!isPanelOpen);
-              }}
-            />
-          </>
+            {!isPanelOpen && (
+              <img
+                src={profilePic || '[A]'}
+                alt="Profile"
+                className="header-profile-pic"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsPanelOpen(true);
+                }}
+              />
+            )}
+          </div>
         )}
       </header>
       <main className="dashboard">
@@ -362,139 +345,145 @@ function App() {
         )}
         {!activeTab ? (
           <div className="economic-tabs">
-            <span className={`tab-section ${theme}`} onClick={() => setActiveTab('home')}>
-              <FaHome className="tab-icon" /> Home
-            </span>
-            <span className={`tab-section ${theme}`} onClick={() => setActiveTab('markets')}>
-              <FaChartLine className="tab-icon" /> Markets
-            </span>
-            <span className={`tab-section ${theme}`} onClick={() => { setActiveTab('work'); setMode('work'); }}>
-              <FaBriefcase className="tab-icon" /> Work
-            </span>
-            <span className={`tab-section ${theme}`} onClick={() => { setActiveTab('social'); setMode('social'); }}>
-              <FaUsers className="tab-icon" /> Social
-            </span>
+            <span className="tab-text" onClick={() => setActiveTab('markets')}>Markets</span>
+            <span className="tab-divider" />
+            <span className="tab-text" onClick={() => { setActiveTab('work'); setMode('work'); }}>Work</span>
+            <span className="tab-divider" />
+            <span className="tab-text" onClick={() => { setActiveTab('social'); setMode('social'); }}>Social</span>
           </div>
         ) : null}
-        {activeTab === 'home' && !mode && (
-          <div className={`welcome ${theme}`}>
-            <h2>Welcome, {displayName}!</h2>
-            <div className="stats-card">
-              <p>Wallet: {walletBalance.toFixed(2)} WC</p>
-              <p>Influence: {influence}</p>
-            </div>
-          </div>
-        )}
         {activeTab === 'markets' && !mode && (
           <div className={`markets ${theme}`}>
+            <IoIosArrowBack className={`back-arrow ${theme}`} onClick={() => setActiveTab(null)} />
             <h2>Markets</h2>
-            <div className="stats-card">
-              <p>Wallet: {walletBalance.toFixed(2)} WC</p>
-              <p>Influence: {influence}</p>
-              <button className="action-btn">Buy WC</button>
-              <button className="action-btn">Sell WC</button>
-            </div>
+            <p>Wallet: {walletBalance.toFixed(2)} WC</p>
+            <p>Influence: {influence}</p>
+            <button className="futuristic-btn">Acquire WC</button>
+            <button className="futuristic-btn">Liquidate WC</button>
           </div>
         )}
         {activeTab === 'work' && mode === 'work' && (
           <div className={`work-mode ${theme}`}>
+            <IoIosArrowBack className={`back-arrow ${theme}`} onClick={() => setMode(null)} />
             <h2>Work</h2>
-            <button className="action-btn" onClick={() => setMode('stream')}>Stream</button>
-            <button className="action-btn" onClick={handleTask}>Task (+10)</button>
-            <button className="action-btn" onClick={handleKnowledgeGame}>Solve (+20)</button>
-            <button className={`action-btn back-btn ${theme}`} onClick={() => setMode(null)}><IoIosArrowBack /></button>
+            <button className="futuristic-btn" onClick={() => setMode('stream')}>Stream</button>
+            <button className="futuristic-btn" onClick={handleTask}>Task (+10)</button>
+            <button className="futuristic-btn" onClick={handleKnowledgeGame}>Solve (+20)</button>
           </div>
         )}
         {activeTab === 'social' && mode === 'social' && (
           <div className={`social-mode ${theme}`}>
-            <h2>Social</h2>
-            <div className="social-sub-tabs">
-              <span className={`social-section ${socialSubTab === 'chats' ? 'active' : ''} ${theme}`} onClick={() => setSocialSubTab('chats')}>
-                Chats
-              </span>
-              <span className={`social-section ${socialSubTab === 'calls' ? 'active' : ''} ${theme}`} onClick={() => setSocialSubTab('calls')}>
-                Calls
-              </span>
-              <span className={`social-section ${socialSubTab === 'stories' ? 'active' : ''} ${theme}`} onClick={() => setSocialSubTab('stories')}>
-                Stories
-              </span>
-            </div>
-            {socialSubTab === 'chats' ? (
-              <div className="chats-section">
-                <div className="chat-sub-sections">
-                  <span className={`chat-section ${chatSection === 'friends' ? 'active' : ''} ${theme}`} onClick={() => setChatSection('friends')}>
-                    Friends
-                  </span>
-                  <span className={`chat-section ${chatSection === 'communities' ? 'active' : ''} ${theme}`} onClick={() => setChatSection('communities')}>
-                    Communities
-                  </span>
-                  <span className={`chat-section ${chatSection === 'global' ? 'active' : ''} ${theme}`} onClick={() => setChatSection('global')}>
-                    Global
-                  </span>
+            <IoIosArrowBack className={`back-arrow ${theme}`} onClick={() => setMode(null)} />
+            <h2>Social Nexus</h2>
+            <div className="social-content">
+              {searchResults.videos.length > 0 && (
+                <div className={`search-results ${theme}`}>
+                  <p>Videos: {searchResults.videos.join(', ')}</p>
+                  <p>Friends: {searchResults.friends.join(', ')}</p>
+                  <p>Social: {searchResults.social.join(', ')}</p>
                 </div>
-                {chatSection === 'friends' && (
-                  <div>
-                    <button className="action-btn" onClick={() => setIsChatOpen(true)}>Friend Chat</button>
+              )}
+              {socialSubTab === 'reels' && (
+                <div className="reels-section">
+                  <div className={`reel-item ${theme}`}>Short Video 1 <FaVideo /></div>
+                  <div className={`reel-item ${theme}`}>Short Video 2 <FaVideo /></div>
+                  <div className={`reel-item ${theme}`}>Short Video 3 <FaVideo /></div>
+                </div>
+              )}
+              {socialSubTab === 'post' && (
+                <div>
+                  <input value={newPost} onChange={(e) => setNewPost(e.target.value)} placeholder="Transmit Thought... (+5)" className={`futuristic-input ${theme}`} />
+                  <button className="futuristic-btn" onClick={handleNewPost}><FaPaperPlane /></button>
+                </div>
+              )}
+              {socialSubTab === 'public' && (
+                <div className="chat-section">
+                  <p>Public Nodes: Group1, Group2</p>
+                  <p>Known Entities: UserA, UserB</p>
+                  <div className="chat-history">
+                    {messages.filter(m => m.type === 'public').map(m => (
+                      <div key={m.id} className={`message ${theme}`}>
+                        <strong>{m.user}</strong> {m.text} <span>{new Date(m.timestamp).toLocaleString()}</span>
+                      </div>
+                    ))}
                   </div>
-                )}
-                {chatSection === 'communities' && (
-                  <div>
-                    <button className="action-btn" onClick={() => setIsFeedOpen(true)}>Community Feed</button>
+                  <FaComment className={`chat-icon ${theme}`} title="Socialize" onClick={() => { setChatFriend('Public'); setIsChatOpen(true); }} />
+                </div>
+              )}
+              {socialSubTab === 'community' && (
+                <div className="chat-section">
+                  <p>Communities: Comm1, Comm2</p>
+                  <p>Clusters: GroupA, GroupB</p>
+                  <div className="chat-history">
+                    {messages.filter(m => m.type === 'public').map(m => (
+                      <div key={m.id} className={`message ${theme}`}>
+                        <strong>{m.user}</strong> {m.text} <span>{new Date(m.timestamp).toLocaleString()}</span>
+                      </div>
+                    ))}
                   </div>
-                )}
-                {chatSection === 'global' && (
-                  <div>
-                    <button className="action-btn" onClick={handleFileShare}>Share File (+5)</button>
-                    <button className="action-btn" onClick={handleLocationShare}>Share Location (+3)</button>
-                    <button className="action-btn" onClick={handleVoiceMessage}>
-                      Voice Msg {voiceMessage || '(+5)'}
-                    </button>
+                  <FaComment className={`chat-icon ${theme}`} title="Socialize" onClick={() => { setChatFriend('Community'); setIsChatOpen(true); }} />
+                </div>
+              )}
+              {socialSubTab === 'private' && (
+                <div className="chat-section">
+                  <p>Connected Entities: Friend1, Friend2</p>
+                  <div className="chat-history">
+                    {messages.filter(m => m.type === 'private').map(m => (
+                      <div key={m.id} className={`message ${theme}`}>
+                        <strong>{m.user}</strong> {m.text} <span>{new Date(m.timestamp).toLocaleString()}</span>
+                      </div>
+                    ))}
                   </div>
-                )}
+                  <FaComment className={`chat-icon ${theme}`} title="Talk to Friend" onClick={() => { setChatFriend('Friend1'); setIsChatOpen(true); }} />
+                </div>
+              )}
+              {socialSubTab === 'story' && (
+                <div>
+                  <input value={storyContent} onChange={(e) => setStoryContent(e.target.value)} placeholder="Broadcast Story... (+10)" className={`futuristic-input ${theme}`} />
+                  <button className="futuristic-btn" onClick={handleNewStory}>Transmit</button>
+                </div>
+              )}
+            </div>
+            <div className="social-footer">
+              <div className="footer-item" onClick={() => setSocialSubTab('reels')}>
+                <FaVideo className={`social-icon ${theme}`} />
+                <span className={`footer-label ${theme}`}>Reels</span>
               </div>
-            ) : socialSubTab === 'calls' ? (
-              <div className="calls-section">
-                <button className="action-btn" onClick={() => handleCall('Voice')}>Voice Call (+10)</button>
-                <button className="action-btn" onClick={() => handleCall('Video')}>Video Call (+10)</button>
-                <button className="action-btn" onClick={() => handleCall('Group Video')}>Group Video (+10)</button>
+              <div className="footer-item" onClick={() => setSocialSubTab('post')}>
+                <FaPlusSquare className={`social-icon ${theme}`} />
+                <span className={`footer-label ${theme}`}>Post</span>
               </div>
-            ) : socialSubTab === 'stories' ? (
-              <div className="stories-section">
-                <input
-                  value={storyContent}
-                  onChange={(e) => setStoryContent(e.target.value)}
-                  placeholder="New Story... (+10)"
-                  className={`post-input ${theme}`}
-                />
-                <button className="action-btn" onClick={handleNewStory}>Post Story</button>
+              <div className="footer-item" onClick={() => setSocialSubTab('public')}>
+                <FaGlobe className={`social-icon ${theme}`} />
+                <span className={`footer-label ${theme}`}>Public</span>
               </div>
-            ) : null}
+              <div className="footer-item" onClick={() => setSocialSubTab('community')}>
+                <FaUserFriends className={`social-icon ${theme}`} />
+                <span className={`footer-label ${theme}`}>Community</span>
+              </div>
+              <div className="footer-item" onClick={() => setSocialSubTab('private')}>
+                <FaLock className={`social-icon ${theme}`} />
+                <span className={`footer-label ${theme}`}>Private</span>
+              </div>
+              <div className="footer-item" onClick={() => setSocialSubTab('story')}>
+                <FaBookOpen className={`social-icon ${theme}`} />
+                <span className={`footer-label ${theme}`}>Story</span>
+              </div>
+            </div>
           </div>
         )}
         {mode === 'stream' && (
           <div className={`unity-container ${theme}`}>
+            <IoIosArrowBack className={`back-arrow ${theme}`} onClick={() => setMode(null)} />
             <h2>Stream</h2>
             <Unity unityProvider={unityProvider} style={{ width: '100%', height: '100%' }} />
-            <button className={`action-btn back-btn ${theme}`} onClick={() => setMode(null)}><IoIosArrowBack /></button>
-          </div>
-        )}
-        {activeTab && (
-          <div className="home-icon" onClick={() => {
-            setActiveTab(null);
-            setMode(null);
-            setIsPanelOpen(false);
-            setIsFeedOpen(false);
-            setIsChatOpen(false);
-          }}>
-            <span className={`home-icon-inner ${theme}`}><FaHome /></span>
           </div>
         )}
         {user && (
           <>
             <div ref={profilePanelRef} className={`slide-panel ${isPanelOpen ? 'open' : ''} ${theme}`}>
               <div className="panel-header">
-                <button className={`action-btn back-btn ${theme}`} onClick={() => setIsPanelOpen(false)}><IoIosArrowBack /></button>
-                <FaCog className={`gear-icon ${theme}`} onClick={() => console.log('Settings TBD')} />
+                <button className={`futuristic-btn back-btn ${theme}`} onClick={() => setIsPanelOpen(false)}><IoIosArrowBack /></button>
                 <span
                   className={`theme-icon ${theme}`}
                   onClick={() => {
@@ -508,7 +497,7 @@ function App() {
               </div>
               <div className={`panel-content ${theme}`}>
                 <img src={profilePic || '[A]'} alt="Profile" className="profile-pic" />
-                <input type="file" accept="image/*" onChange={handlePicUpload} className={`pic-upload ${theme}`} />
+                <input type="file" accept="image/*" onChange={handlePicUpload} className={`futuristic-input ${theme}`} />
                 <h2>{displayName}</h2>
                 <p>WC: {walletBalance.toFixed(2)} | Inf: {influence}</p>
                 <div className="info-grid">
@@ -517,7 +506,7 @@ function App() {
                     {expandedTab === 'wallet' && (
                       <div className={`info-details ${theme}`}>
                         <p>{walletBalance.toFixed(2)} WC</p>
-                        <button className="action-btn" onClick={handleSendWC}>Send</button>
+                        <button className="futuristic-btn" onClick={handleSendWC}>Transmit</button>
                       </div>
                     )}
                   </div>
@@ -526,49 +515,40 @@ function App() {
                     {expandedTab === 'assets' && <div className={`info-details ${theme}`}><p>1 Land</p></div>}
                   </div>
                 </div>
-                <button className="action-btn" onClick={handleEditProfile}>Edit</button>
-                <button className="action-btn" onClick={handleLogout}>Logout</button>
+                <button className="futuristic-btn" onClick={handleEditProfile}>Modify Identity</button>
+                <button className="futuristic-btn" onClick={handleLogout}>Disconnect</button>
+                <FaCog className={`gear-icon ${theme}`} onClick={() => console.log('Settings TBD')} />
               </div>
             </div>
             <div className={`feed-panel ${isFeedOpen ? 'open' : ''} ${theme}`}>
               <div className="feed-header">
-                <button className={`action-btn back-btn ${theme}`} onClick={() => setIsFeedOpen(false)}><IoIosArrowBack /></button>
+                <button className={`futuristic-btn back-btn ${theme}`} onClick={() => setIsFeedOpen(false)}><IoIosArrowBack /></button>
               </div>
               <div className={`feed-content ${theme}`}>
-                <input
-                  value={newPost}
-                  onChange={(e) => setNewPost(e.target.value)}
-                  placeholder="Post... (+5)"
-                  className={`post-input ${theme}`}
-                />
-                <button className="action-btn" onClick={handleNewPost}><FaPaperPlane /></button>
+                <input value={newPost} onChange={(e) => setNewPost(e.target.value)} placeholder="Transmit Thought... (+5)" className={`futuristic-input ${theme}`} />
+                <button className="futuristic-btn" onClick={handleNewPost}><FaPaperPlane /></button>
                 {posts.map(post => (
                   <div className={`post ${theme}`} key={post.id}>
-                    <strong>{post.user}</strong> {post.text} <span>{post.time}</span>
+                    <strong>{post.user}</strong> {post.text} <span>{new Date(post.timestamp).toLocaleString()}</span>
                   </div>
                 ))}
               </div>
             </div>
             <div ref={chatPanelRef} className={`chat-panel ${isChatOpen ? 'open' : ''} ${theme}`}>
               <div className="chat-header">
-                <button className={`action-btn back-btn ${theme}`} onClick={() => setIsChatOpen(false)}><IoIosArrowBack /></button>
+                <button className={`futuristic-btn back-btn ${theme}`} onClick={() => setIsChatOpen(false)}><IoIosArrowBack /></button>
+                <span>{chatFriend}</span>
               </div>
               <div className={`chat-content ${theme}`}>
-                {messages.map(msg => (
+                {messages.filter(m => m.to === chatFriend || m.user === chatFriend).map(msg => (
                   <div key={msg.id} className={`message ${msg.user === displayName ? 'sent' : 'received'} ${theme}`}>
-                    <strong>{msg.user}</strong> {msg.text} {msg.encrypted && '(E)'} <span>{msg.time}</span>
+                    <strong>{msg.user}</strong> {msg.text} <span>{new Date(msg.timestamp).toLocaleString()}</span>
                   </div>
                 ))}
               </div>
               <div className="chat-input">
-                <input
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Message... (+3)"
-                  className={`chat-text-input ${theme}`}
-                  onKeyPress={(e) => e.key === 'Enter' && handleNewMessage()}
-                />
-                <button className="action-btn" onClick={handleNewMessage}><FaPaperPlane /></button>
+                <input value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Transmit Message... (+3)" className={`futuristic-input ${theme}`} onKeyPress={(e) => e.key === 'Enter' && handleNewMessage()} />
+                <button className="futuristic-btn" onClick={handleNewMessage}><FaPaperPlane /></button>
               </div>
             </div>
           </>
@@ -578,10 +558,13 @@ function App() {
   );
 
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/" element={user ? dashboardPage : signupPage} />
-    </Routes>
+    <div className="app-wrapper">
+      <Routes>
+        <Route path="/signup" element={signupPage} />
+        <Route path="/login" element={loginPage} />
+        <Route path="/" element={dashboardPage} />
+      </Routes>
+    </div>
   );
 }
 
