@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Unity, useUnityContext } from 'react-unity-webgl';
 import { auth, db } from './firebase';
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
-import { FaSatelliteDish, FaSun, FaMoon, FaPaperPlane, FaChartLine, FaBriefcase, FaUsers, FaCog, FaBell, FaVideo, FaGlobe, FaUserFriends, FaLock, FaPlusSquare, FaSearch, FaBookOpen, FaComment } from 'react-icons/fa';
-import { IoIosArrowBack } from 'react-icons/io';
 import { useNavigate, Routes, Route } from 'react-router-dom';
+import SignupPage from './components/SignupPage';
+import LoginPage from './components/LoginPage';
+import DashboardPage from './components/DashboardPage';
 import './App.css';
 
 function App() {
@@ -42,13 +42,6 @@ function App() {
 
   const profilePanelRef = useRef(null);
   const chatPanelRef = useRef(null);
-
-  const { unityProvider } = useUnityContext({
-    loaderUrl: '/unity/Build/WAVECO-WebGL.loader.js',
-    dataUrl: '/unity/Build/WAVECO-WebGL.data',
-    frameworkUrl: '/unity/Build/WAVECO-WebGL.framework.js',
-    codeUrl: '/unity/Build/WAVECO-WebGL.wasm',
-  });
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
@@ -256,313 +249,94 @@ function App() {
     }
   };
 
-  const showBackButton = activeTab || mode;
-
-  const signupPage = (
-    <div className={`app ${theme}`}>
-      <header className={`header ${theme}`}>
-        <h1 className="waveco-title" onClick={() => navigate('/login')}><span className="wav">wav</span><span className={`eco ${theme}`}>Eco</span></h1>
-      </header>
-      <main className="dashboard">
-        <div className="signup">
-          <h2 className="futuristic-title">Initialize Your WAVECoin Identity</h2>
-          <div className="signup-form">
-            <input type="text" value={realName} onChange={(e) => setRealName(e.target.value)} placeholder="Full Name" className={`futuristic-input ${theme}`} />
-            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" className={`futuristic-input ${theme}`} />
-            <select value={gender} onChange={(e) => setGender(e.target.value)} className={`futuristic-input ${theme}`}>
-              <option value="">Gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-            </select>
-            <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className={`futuristic-input ${theme}`} />
-            <input type="text" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="Country" className={`futuristic-input ${theme}`} />
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className={`futuristic-input ${theme}`} />
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className={`futuristic-input ${theme}`} />
-            <button className="futuristic-btn" onClick={handleSignup}>Activate Profile</button>
-            <button className="futuristic-btn" onClick={handleGoogleSignup}>Sync with Google</button>
-          </div>
-          <p className="futuristic-text">Already synced? <span onClick={() => { console.log('Navigating to /login'); navigate('/login'); }} className="link">Sign In</span></p>
-          <p className="futuristic-text">Gain 500 WAVECoin (WC) upon activation!</p>
-        </div>
-      </main>
-    </div>
-  );
-
-  const loginPage = (
-    <div className={`app ${theme}`}>
-      <header className={`header ${theme}`}>
-        <h1 className="waveco-title" onClick={() => navigate('/signup')}><span className="wav">wav</span><span className={`eco ${theme}`}>Eco</span></h1>
-      </header>
-      <main className="dashboard">
-        <div className="signup">
-          <h2 className="futuristic-title">Sign In to WAVECoin Network</h2>
-          <div className="signup-form">
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className={`futuristic-input ${theme}`} />
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className={`futuristic-input ${theme}`} />
-            <button className="futuristic-btn" onClick={handleLogin}>Sign In</button>
-            <button className="futuristic-btn" onClick={handleGoogleSignup}>Sync with Google</button>
-          </div>
-          <p className="futuristic-text"><span onClick={handleForgotPassword} className="link">Reset Access Code</span></p>
-          <p className="futuristic-text">New entity? <span onClick={() => navigate('/signup')} className="link">Initialize Now</span></p>
-        </div>
-      </main>
-    </div>
-  );
-
-  const dashboardPage = (
-    <div className={`app ${theme}`}>
-      <header className={`header ${theme}`}>
-        <h1 className="waveco-title" onClick={() => { setActiveTab(null); setMode(null); }}><span className="wav">wav</span><span className={`eco ${theme}`}>Eco</span></h1>
-        {user && (
-          <div className="header-right">
-            <FaBell className={`theme-icon ${theme}`} onClick={() => alert(notifications.join('\n'))} />
-            <div className="search-bar">
-              <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Quantum Search..." className={`futuristic-input ${theme}`} />
-              <FaSearch className={`theme-icon ${theme}`} onClick={handleSearch} />
-            </div>
-            <button className={`feed-btn ${theme}`} onClick={() => setIsFeedOpen(!isFeedOpen)}><FaSatelliteDish /></button>
-            {!isPanelOpen && (
-              <img
-                src={profilePic || '[A]'}
-                alt="Profile"
-                className="header-profile-pic"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsPanelOpen(true);
-                }}
-              />
-            )}
-          </div>
-        )}
-      </header>
-      <main className="dashboard">
-        {showBackButton && (
-          <IoIosArrowBack className={`back-arrow ${theme}`} onClick={() => {
-            setActiveTab(null);
-            setMode(null);
-          }} />
-        )}
-        {!activeTab ? (
-          <div className="economic-tabs">
-            <span className="tab-text" onClick={() => setActiveTab('markets')}>Markets</span>
-            <span className="tab-divider" />
-            <span className="tab-text" onClick={() => { setActiveTab('work'); setMode('work'); }}>Work</span>
-            <span className="tab-divider" />
-            <span className="tab-text" onClick={() => { setActiveTab('social'); setMode('social'); }}>Social</span>
-          </div>
-        ) : null}
-        {activeTab === 'markets' && !mode && (
-          <div className={`markets ${theme}`}>
-            <IoIosArrowBack className={`back-arrow ${theme}`} onClick={() => setActiveTab(null)} />
-            <h2>Markets</h2>
-            <p>Wallet: {walletBalance.toFixed(2)} WC</p>
-            <p>Influence: {influence}</p>
-            <button className="futuristic-btn">Acquire WC</button>
-            <button className="futuristic-btn">Liquidate WC</button>
-          </div>
-        )}
-        {activeTab === 'work' && mode === 'work' && (
-          <div className={`work-mode ${theme}`}>
-            <IoIosArrowBack className={`back-arrow ${theme}`} onClick={() => setMode(null)} />
-            <h2>Work</h2>
-            <button className="futuristic-btn" onClick={() => setMode('stream')}>Stream</button>
-            <button className="futuristic-btn" onClick={handleTask}>Task (+10)</button>
-            <button className="futuristic-btn" onClick={handleKnowledgeGame}>Solve (+20)</button>
-          </div>
-        )}
-        {activeTab === 'social' && mode === 'social' && (
-          <div className={`social-mode ${theme}`}>
-            <IoIosArrowBack className={`back-arrow ${theme}`} onClick={() => setMode(null)} />
-            <h2>Social Nexus</h2>
-            <div className="social-content">
-              {searchResults.videos.length > 0 && (
-                <div className={`search-results ${theme}`}>
-                  <p>Videos: {searchResults.videos.join(', ')}</p>
-                  <p>Friends: {searchResults.friends.join(', ')}</p>
-                  <p>Social: {searchResults.social.join(', ')}</p>
-                </div>
-              )}
-              {socialSubTab === 'reels' && (
-                <div className="reels-section">
-                  <div className={`reel-item ${theme}`}>Short Video 1 <FaVideo /></div>
-                  <div className={`reel-item ${theme}`}>Short Video 2 <FaVideo /></div>
-                  <div className={`reel-item ${theme}`}>Short Video 3 <FaVideo /></div>
-                </div>
-              )}
-              {socialSubTab === 'post' && (
-                <div>
-                  <input value={newPost} onChange={(e) => setNewPost(e.target.value)} placeholder="Transmit Thought... (+5)" className={`futuristic-input ${theme}`} />
-                  <button className="futuristic-btn" onClick={handleNewPost}><FaPaperPlane /></button>
-                </div>
-              )}
-              {socialSubTab === 'public' && (
-                <div className="chat-section">
-                  <p>Public Nodes: Group1, Group2</p>
-                  <p>Known Entities: UserA, UserB</p>
-                  <div className="chat-history">
-                    {messages.filter(m => m.type === 'public').map(m => (
-                      <div key={m.id} className={`message ${theme}`}>
-                        <strong>{m.user}</strong> {m.text} <span>{new Date(m.timestamp).toLocaleString()}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <FaComment className={`chat-icon ${theme}`} title="Socialize" onClick={() => { setChatFriend('Public'); setIsChatOpen(true); }} />
-                </div>
-              )}
-              {socialSubTab === 'community' && (
-                <div className="chat-section">
-                  <p>Communities: Comm1, Comm2</p>
-                  <p>Clusters: GroupA, GroupB</p>
-                  <div className="chat-history">
-                    {messages.filter(m => m.type === 'public').map(m => (
-                      <div key={m.id} className={`message ${theme}`}>
-                        <strong>{m.user}</strong> {m.text} <span>{new Date(m.timestamp).toLocaleString()}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <FaComment className={`chat-icon ${theme}`} title="Socialize" onClick={() => { setChatFriend('Community'); setIsChatOpen(true); }} />
-                </div>
-              )}
-              {socialSubTab === 'private' && (
-                <div className="chat-section">
-                  <p>Connected Entities: Friend1, Friend2</p>
-                  <div className="chat-history">
-                    {messages.filter(m => m.type === 'private').map(m => (
-                      <div key={m.id} className={`message ${theme}`}>
-                        <strong>{m.user}</strong> {m.text} <span>{new Date(m.timestamp).toLocaleString()}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <FaComment className={`chat-icon ${theme}`} title="Talk to Friend" onClick={() => { setChatFriend('Friend1'); setIsChatOpen(true); }} />
-                </div>
-              )}
-              {socialSubTab === 'story' && (
-                <div>
-                  <input value={storyContent} onChange={(e) => setStoryContent(e.target.value)} placeholder="Broadcast Story... (+10)" className={`futuristic-input ${theme}`} />
-                  <button className="futuristic-btn" onClick={handleNewStory}>Transmit</button>
-                </div>
-              )}
-            </div>
-            <div className="social-footer">
-              <div className="footer-item" onClick={() => setSocialSubTab('reels')}>
-                <FaVideo className={`social-icon ${theme}`} />
-                <span className={`footer-label ${theme}`}>Reels</span>
-              </div>
-              <div className="footer-item" onClick={() => setSocialSubTab('post')}>
-                <FaPlusSquare className={`social-icon ${theme}`} />
-                <span className={`footer-label ${theme}`}>Post</span>
-              </div>
-              <div className="footer-item" onClick={() => setSocialSubTab('public')}>
-                <FaGlobe className={`social-icon ${theme}`} />
-                <span className={`footer-label ${theme}`}>Public</span>
-              </div>
-              <div className="footer-item" onClick={() => setSocialSubTab('community')}>
-                <FaUserFriends className={`social-icon ${theme}`} />
-                <span className={`footer-label ${theme}`}>Community</span>
-              </div>
-              <div className="footer-item" onClick={() => setSocialSubTab('private')}>
-                <FaLock className={`social-icon ${theme}`} />
-                <span className={`footer-label ${theme}`}>Private</span>
-              </div>
-              <div className="footer-item" onClick={() => setSocialSubTab('story')}>
-                <FaBookOpen className={`social-icon ${theme}`} />
-                <span className={`footer-label ${theme}`}>Story</span>
-              </div>
-            </div>
-          </div>
-        )}
-        {mode === 'stream' && (
-          <div className={`unity-container ${theme}`}>
-            <IoIosArrowBack className={`back-arrow ${theme}`} onClick={() => setMode(null)} />
-            <h2>Stream</h2>
-            <Unity unityProvider={unityProvider} style={{ width: '100%', height: '100%' }} />
-          </div>
-        )}
-        {user && (
-          <>
-            <div ref={profilePanelRef} className={`slide-panel ${isPanelOpen ? 'open' : ''} ${theme}`}>
-              <div className="panel-header">
-                <button className={`futuristic-btn back-btn ${theme}`} onClick={() => setIsPanelOpen(false)}><IoIosArrowBack /></button>
-                <span
-                  className={`theme-icon ${theme}`}
-                  onClick={() => {
-                    const newTheme = theme === 'dark' ? 'light' : 'dark';
-                    setTheme(newTheme);
-                    setDoc(doc(db, 'users', user.uid), { theme: newTheme }, { merge: true });
-                  }}
-                >
-                  {theme === 'dark' ? <FaSun /> : <FaMoon />}
-                </span>
-              </div>
-              <div className={`panel-content ${theme}`}>
-                <img src={profilePic || '[A]'} alt="Profile" className="profile-pic" />
-                <input type="file" accept="image/*" onChange={handlePicUpload} className={`futuristic-input ${theme}`} />
-                <h2>{displayName}</h2>
-                <p>WC: {walletBalance.toFixed(2)} | Inf: {influence}</p>
-                <div className="info-grid">
-                  <div className={`info-item ${theme}`} onClick={() => setExpandedTab(expandedTab === 'wallet' ? null : 'wallet')}>
-                    <span className="icon">W</span>
-                    {expandedTab === 'wallet' && (
-                      <div className={`info-details ${theme}`}>
-                        <p>{walletBalance.toFixed(2)} WC</p>
-                        <button className="futuristic-btn" onClick={handleSendWC}>Transmit</button>
-                      </div>
-                    )}
-                  </div>
-                  <div className={`info-item ${theme}`} onClick={() => setExpandedTab(expandedTab === 'assets' ? null : 'assets')}>
-                    <span className="icon">A</span>
-                    {expandedTab === 'assets' && <div className={`info-details ${theme}`}><p>1 Land</p></div>}
-                  </div>
-                </div>
-                <button className="futuristic-btn" onClick={handleEditProfile}>Modify Identity</button>
-                <button className="futuristic-btn" onClick={handleLogout}>Disconnect</button>
-                <FaCog className={`gear-icon ${theme}`} onClick={() => console.log('Settings TBD')} />
-              </div>
-            </div>
-            <div className={`feed-panel ${isFeedOpen ? 'open' : ''} ${theme}`}>
-              <div className="feed-header">
-                <button className={`futuristic-btn back-btn ${theme}`} onClick={() => setIsFeedOpen(false)}><IoIosArrowBack /></button>
-              </div>
-              <div className={`feed-content ${theme}`}>
-                <input value={newPost} onChange={(e) => setNewPost(e.target.value)} placeholder="Transmit Thought... (+5)" className={`futuristic-input ${theme}`} />
-                <button className="futuristic-btn" onClick={handleNewPost}><FaPaperPlane /></button>
-                {posts.map(post => (
-                  <div className={`post ${theme}`} key={post.id}>
-                    <strong>{post.user}</strong> {post.text} <span>{new Date(post.timestamp).toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div ref={chatPanelRef} className={`chat-panel ${isChatOpen ? 'open' : ''} ${theme}`}>
-              <div className="chat-header">
-                <button className={`futuristic-btn back-btn ${theme}`} onClick={() => setIsChatOpen(false)}><IoIosArrowBack /></button>
-                <span>{chatFriend}</span>
-              </div>
-              <div className={`chat-content ${theme}`}>
-                {messages.filter(m => m.to === chatFriend || m.user === chatFriend).map(msg => (
-                  <div key={msg.id} className={`message ${msg.user === displayName ? 'sent' : 'received'} ${theme}`}>
-                    <strong>{msg.user}</strong> {msg.text} <span>{new Date(msg.timestamp).toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="chat-input">
-                <input value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Transmit Message... (+3)" className={`futuristic-input ${theme}`} onKeyPress={(e) => e.key === 'Enter' && handleNewMessage()} />
-                <button className="futuristic-btn" onClick={handleNewMessage}><FaPaperPlane /></button>
-              </div>
-            </div>
-          </>
-        )}
-      </main>
-    </div>
-  );
-
   return (
     <div className="app-wrapper">
       <Routes>
-        <Route path="/signup" element={signupPage} />
-        <Route path="/login" element={loginPage} />
-        <Route path="/" element={dashboardPage} />
+        <Route path="/signup" element={
+          <SignupPage
+            theme={theme}
+            navigate={navigate}
+            setRealName={setRealName}
+            setUsername={setUsername}
+            setGender={setGender}
+            setDob={setDob}
+            setCountry={setCountry}
+            setEmail={setEmail}
+            setPassword={setPassword}
+            handleSignup={handleSignup}
+            handleGoogleSignup={handleGoogleSignup}
+            realName={realName}
+            username={username}
+            gender={gender}
+            dob={dob}
+            country={country}
+            email={email}
+            password={password}
+          />
+        } />
+        <Route path="/login" element={
+          <LoginPage
+            theme={theme}
+            navigate={navigate}
+            setEmail={setEmail}
+            setPassword={setPassword}
+            handleLogin={handleLogin}
+            handleGoogleSignup={handleGoogleSignup}
+            handleForgotPassword={handleForgotPassword}
+            email={email}
+            password={password}
+          />
+        } />
+        <Route path="/" element={
+          <DashboardPage
+            theme={theme}
+            user={user}
+            navigate={navigate}
+            setActiveTab={setActiveTab}
+            setMode={setMode}
+            activeTab={activeTab}
+            mode={mode}
+            profilePic={profilePic}
+            setIsPanelOpen={setIsPanelOpen}
+            isPanelOpen={isPanelOpen}
+            setIsFeedOpen={setIsFeedOpen}
+            isFeedOpen={isFeedOpen}
+            setIsChatOpen={setIsChatOpen}
+            isChatOpen={isChatOpen}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            handleSearch={handleSearch}
+            walletBalance={walletBalance}
+            influence={influence}
+            handleTask={handleTask}
+            handleKnowledgeGame={handleKnowledgeGame}
+            socialSubTab={socialSubTab}
+            setSocialSubTab={setSocialSubTab}
+            searchResults={searchResults}
+            newPost={newPost}
+            setNewPost={setNewPost}
+            handleNewPost={handleNewPost}
+            posts={posts}
+            storyContent={storyContent}
+            setStoryContent={setStoryContent}
+            handleNewStory={handleNewStory}
+            messages={messages}
+            setChatFriend={setChatFriend}
+            notifications={notifications}
+            displayName={displayName}
+            newMessage={newMessage}
+            setNewMessage={setNewMessage}
+            handleNewMessage={handleNewMessage}
+            chatFriend={chatFriend}
+            setTheme={setTheme}
+            handlePicUpload={handlePicUpload}
+            handleEditProfile={handleEditProfile}
+            handleLogout={handleLogout}
+            handleSendWC={handleSendWC}
+            expandedTab={expandedTab}
+            setExpandedTab={setExpandedTab}
+          />
+        } />
       </Routes>
     </div>
   );
