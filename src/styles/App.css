@@ -1,51 +1,97 @@
 .app {
   min-height: 100vh;
-  background: #1f2528 !important;
-  color: #d1d5db;
-  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #1f2528;
+  color: #ffffff;
+  font-family: Arial, sans-serif;
 }
 
 .app.light {
-  background: #ffffff !important;
-  color: #333333;
+  background-color: #ffffff;
+  color: #1f2528;
 }
 
-.app.light h1,
-.app.light h2,
-.app.light h3 {
-  color: #333333;
-  font-weight: 600;
-  font-size: 1.2rem;
-}
-
-.app.light p,
-.app.light span {
-  color: #4b5563;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.app.light button,
-.app.light input {
-  background: #ffffff;
-  color: #333333;
-  border: 1px solid #d1d5db;
+.auth-modal {
+  width: 320px;
+  padding: 20px;
+  background-color: #3a4147;
   border-radius: 0.5rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  transition: background 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.app.light button:hover {
-  background: #007aff;
+.app.light .auth-modal {
+  background-color: #ebedf0;
+  color: #1f2528;
+}
+
+.modern-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.modern-form h2 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-group input,
+.form-group select {
+  padding: 10px;
+  border: none;
+  border-radius: 0.3rem;
+  background-color: #4a555e;
   color: #ffffff;
 }
 
-.wav {
-  color: #007aff;
+.app.light .form-group input,
+.app.light .form-group select {
+  background-color: #d5d8dc;
+  color: #1f2528;
 }
 
-.Eco {
-  color: #d1d5db;
+.form-group input::placeholder {
+  color: #a0a0a0;
+}
+
+.auth-submit {
+  padding: 10px;
+  background-color: #007aff;
+  color: #ffffff;
+  border: none;
+  border-radius: 0.3rem;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.auth-submit:hover {
+  background-color: #005bb5;
+}
+
+.forgot-password,
+.auth-switch {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.forgot-password button,
+.auth-switch button {
+  background: none;
+  border: none;
+  color: #007aff;
+  cursor: pointer;
+}
+
+.app.light .forgot-password button,
+.app.light .auth-switch button {
+  color: #005bb5;
 }

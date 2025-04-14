@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, useNavigate, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import './styles/App.css';
 import { auth, db } from './firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import WelcomePage from './components/WelcomePage';
-import Dashboard from './components/Dashboard/Dashboard';
 import SignIn from './components/SignIn';
 import SignUp from './components/SignUp';
+import WelcomePage from './components/WelcomePage';
+import Dashboard from './components/Dashboard/Dashboard';
 
 function AuthForm({ theme }) {
   const [isSignInMode, setIsSignInMode] = useState(false);
@@ -24,6 +24,7 @@ function AuthForm({ theme }) {
       await signInWithEmailAndPassword(auth, email, password);
       navigate('/welcome');
     } catch (error) {
+      console.error('SignIn Error:', error.code, error.message);
       alert('Sign-in failed: ' + error.message);
     }
   };
@@ -39,6 +40,7 @@ function AuthForm({ theme }) {
       });
       navigate('/welcome');
     } catch (error) {
+      console.error('SignUp Error:', error.code, error.message);
       alert('Sign-up failed: ' + error.message);
     }
   };
@@ -50,6 +52,7 @@ function AuthForm({ theme }) {
       await sendPasswordResetEmail(auth, email);
       alert('Password reset email sent. Check your inbox.');
     } catch (error) {
+      console.error('Forgot Password Error:', error.code, error.message);
       alert('Failed to send reset email: ' + error.message);
     }
   };
@@ -150,14 +153,37 @@ function PrivateRoute({ user, children }) {
   return user ? children : <Navigate to="/" />;
 }
 
+function ErrorBoundary({ children }) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const handleError = (error) => {
+      console.error('ErrorBoundary:', error);
+      setHasError(true);
+    };
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+
+  if (hasError) {
+    return <h1>Something went wrong. Please refresh.</h1>;
+  }
+  return children;
+}
+
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState('dark');
 
   useEffect(() => {
+    console.log('Checking Firebase auth state...');
     const unsubscribe = auth.onAuthStateChanged((user) => {
+      console.log('Auth state:', user ? 'User logged in' : 'No user');
       setUser(user);
+      setLoading(false);
+    }, (error) => {
+      console.error('Auth error:', error);
       setLoading(false);
     });
     return unsubscribe;
@@ -168,32 +194,34 @@ function App() {
   }
 
   return (
-    <Router>
-      <div className={`app ${theme}`}>
-        <Routes>
-          <Route path="/" element={<AuthForm theme={theme} />} />
-          <Route path="/welcome" element={<WelcomePage theme={theme} />} />
-          <Route path="/signin" element={<SignIn navigate={useNavigate} />} />
-          <Route path="/signup" element={<SignUp navigate={useNavigate} />} />
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoute user={user}>
-                <Dashboard user={user} navigate={useNavigate} theme={theme} setTheme={setTheme} />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <PrivateRoute user={user}>
-                <Dashboard user={user} navigate={useNavigate} theme={theme} setTheme={setTheme} initialSection="profile" />
-              </PrivateRoute>
-            }
-          />
-        </Routes>
-      </div>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <div className={`app ${theme}`}>
+          <Routes>
+            <Route path="/" element={<AuthForm theme={theme} />} />
+            <Route path="/welcome" element={<WelcomePage theme={theme} />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route
+              path="/dashboard"
+              element={
+                <PrivateRoute user={user}>
+                  <Dashboard user={user} theme={theme} setTheme={setTheme} />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <PrivateRoute user={user}>
+                  <Dashboard user={user} theme={theme} setTheme={setTheme} initialSection="profile" />
+                </PrivateRoute>
+              }
+            />
+          </Routes>
+        </div>
+      </Router>
+    </ErrorBoundary>
   );
 }
 
