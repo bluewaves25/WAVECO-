@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
 import '../styles/SignIn.css';
 
-const SignIn = ({ navigate }) => {
+const SignIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -15,9 +17,13 @@ const SignIn = ({ navigate }) => {
       await signInWithEmailAndPassword(auth, email, password);
       navigate('/welcome');
     } catch (err) {
-      setError(err.code === 'auth/user-not-found' ? 'User not found' :
-               err.code === 'auth/wrong-password' ? 'Incorrect password' :
-               'Sign-in failed. Try again.');
+      console.error('SignIn Error:', err.code, err.message);
+      setError(
+        err.code === 'auth/user-not-found' ? 'User not found' :
+        err.code === 'auth/wrong-password' ? 'Incorrect password' :
+        err.code === 'auth/invalid-email' ? 'Invalid email format' :
+        `Sign-in failed: ${err.message}`
+      );
     }
   };
 

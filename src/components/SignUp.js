@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import '../styles/SignUp.css';
 
-const SignUp = ({ navigate }) => {
+const SignUp = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleSignUp = async (e) => {
     e.preventDefault();
@@ -25,9 +27,13 @@ const SignUp = ({ navigate }) => {
       });
       navigate('/welcome');
     } catch (err) {
-      setError(err.code === 'auth/email-already-in-use' ? 'Email already in use' :
-               err.code === 'auth/weak-password' ? 'Password too weak (min 6 chars)' :
-               'Sign-up failed. Try again.');
+      console.error('SignUp Error:', err.code, err.message);
+      setError(
+        err.code === 'auth/email-already-in-use' ? 'Email already in use' :
+        err.code === 'auth/weak-password' ? 'Password too weak (min 6 chars)' :
+        err.code === 'auth/invalid-email' ? 'Invalid email format' :
+        `Sign-up failed: ${err.message}`
+      );
     }
   };
 
