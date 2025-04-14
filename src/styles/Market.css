@@ -1,0 +1,78 @@
+.market-content {
+  flex: 1;
+  width: 100%;
+  background: #1f2528;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: 0 1rem 1rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.app.light .market-content {
+  background: #ffffff !important;
+}
+
+.market-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.market-item {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0.3rem;
+  padding: 0.5rem;
+}
+
+.app.light .market-item {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.market-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
+}
+
+.app.light .market-item:hover {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.market-item img {
+  width: 100%;
+  aspect-ratio: 1/1;
+  object-fit: cover;
+  border-radius: 0.3rem;
+}
+
+.market-item h3 {
+  font-size: 0.9rem;
+  margin: 0.3rem 0;
+}
+
+.market-item p {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.app.light .market-item p {
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.market-item button {
+  background: #007aff;
+  border: none;
+  padding: 0.3rem 0.5rem;
+  border-radius: 0.3rem;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.market-item button:hover {
+  background: #005bb5;
+}

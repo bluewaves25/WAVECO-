@@ -1,6 +1,7 @@
 import React from 'react';
 import { FaPaperPlane } from 'react-icons/fa';
 import { IoIosArrowBack } from 'react-icons/io';
+import '../styles/Chat.css';
 
 const ChatPanel = ({ theme, isChatOpen, setIsChatOpen, chatFriend, messages, displayName, newMessage, setNewMessage, handleNewMessage }) => (
   <div className={`chat-panel ${isChatOpen ? 'open' : ''} ${theme}`}>
@@ -16,7 +17,13 @@ const ChatPanel = ({ theme, isChatOpen, setIsChatOpen, chatFriend, messages, dis
       ))}
     </div>
     <div className="chat-input">
-      <input value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Transmit Message... (+3)" className={`futuristic-input ${theme}`} onKeyPress={(e) => e.key === 'Enter' && handleNewMessage()} />
+      <input
+        value={newMessage}
+        onChange={(e) => setNewMessage(e.target.value)}
+        placeholder="Transmit Message... (+3)"
+        className={`futuristic-input ${theme}`}
+        onKeyPress={(e) => e.key === 'Enter' && handleNewMessage()}
+      />
       <button className="futuristic-btn" onClick={handleNewMessage}><FaPaperPlane /></button>
     </div>
   </div>

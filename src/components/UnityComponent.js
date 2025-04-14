@@ -1,6 +1,7 @@
 import React from 'react';
 import { Unity, useUnityContext } from 'react-unity-webgl';
 import { IoIosArrowBack } from 'react-icons/io';
+import '../styles/Unity.css';
 
 const UnityComponent = ({ theme, setMode }) => {
   const { unityProvider } = useUnityContext({

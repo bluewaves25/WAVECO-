@@ -1,18 +1,20 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, updateDoc, increment, addDoc, collection } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCt98vHVRiQS1h-GWKfklN2TyM1PsNpDAM",
-  authDomain: "waveco-bluewaves.firebaseapp.com",
-  projectId: "waveco-bluewaves",
-  storageBucket: "waveco-bluewaves.appspot.com",
-  messagingSenderId: "797425086005",
-  appId: "1:797425086005:web:ae1a35fc83c6157747cb7c"
+    apiKey: "AIzaSyC14J4tdmLktm7QyTDoBOvyVDKEWnkptRA",
+    authDomain: "waveco-df820.firebaseapp.com",
+    projectId: "waveco-df820",
+    storageBucket: "waveco-df820.firebasestorage.app",
+    messagingSenderId: "751785780421",
+    appId: "1:751785780421:web:c802769c8de92949613cac"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
-export { auth, db };
+export { auth, db, storage, doc, getDoc, updateDoc, increment, addDoc, collection };

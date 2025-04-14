@@ -1,0 +1,356 @@
+.profile-panel {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 100%;
+  max-width: 400px;
+  height: 100%;
+  background: linear-gradient(to bottom, #3a4147, #4a555e);
+  transition: right 0.3s ease;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  color: #d1d5db;
+  overflow: hidden;
+}
+
+.app.light .profile-panel {
+  background: linear-gradient(to bottom, #ebedf0, #d5d8dc) !important;
+  color: #333333;
+}
+
+.profile-panel.open {
+  right: 0;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.app.light .profile-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.profile-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.profile-pic-large {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  margin-bottom: 0.5rem;
+}
+
+.username {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.location {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.app.light .location {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.theme-btn {
+  background: none;
+  border: none;
+  color: #d1d5db;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.app.light .theme-btn {
+  color: #333333;
+}
+
+.theme-btn:hover {
+  color: #007aff;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #d1d5db;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.app.light .back-btn {
+  color: #333333;
+}
+
+.back-btn:hover {
+  color: #007aff;
+}
+
+.profile-content {
+  flex-grow: 1;
+  padding: 1rem;
+  overflow-y: hidden;
+}
+
+.info-bar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.info-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 0.3rem;
+  cursor: pointer;
+}
+
+.app.light .info-item {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.info-item:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.app.light .info-item:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.info-item span {
+  font-size: 0.8rem;
+}
+
+.icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.detail {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0.3rem;
+  width: 100%;
+}
+
+.app.light .detail {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.zest-wallet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.zest-wallet h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.zest-wallet p {
+  font-size: 0.9rem;
+  margin: 0.3rem 0;
+}
+
+.wallet-qr {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.wallet-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.wallet-actions button {
+  background: #007aff;
+  color: #ffffff;
+  border: none;
+  padding: 0.3rem;
+  border-radius: 0.3rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.wallet-actions button:hover {
+  background: #005bb5;
+}
+
+.wallet-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+  width: 100%;
+}
+
+.wallet-form input {
+  padding: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: #d1d5db;
+  border-radius: 0.3rem;
+  font-size: 0.9rem;
+}
+
+.app.light .wallet-form input {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  color: #333333;
+}
+
+.wallet-form input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.app.light .wallet-form input::placeholder {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.wallet-history {
+  margin-top: 0.5rem;
+}
+
+.wallet-history h4 {
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+
+.wallet-history ul {
+  list-style: none;
+  padding: 0;
+}
+
+.wallet-history li {
+  font-size: 0.8rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.app.light .wallet-history li {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.wallet-history small {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.app.light .wallet-history small {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.world-section {
+  margin: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.world-label {
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.go-home-btn {
+  background: #007aff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.3rem;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.go-home-btn:hover {
+  background: #005bb5;
+}
+
+.profile-settings {
+  margin: 1rem 0;
+}
+
+.profile-settings h3 {
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.settings-icon {
+  font-size: 1rem;
+}
+
+.profile-settings form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.input-field {
+  padding: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: #d1d5db;
+  border-radius: 0.3rem;
+  font-size: 0.9rem;
+}
+
+.app.light .input-field {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  color: #333333;
+}
+
+.input-field::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.app.light .input-field::placeholder {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.help-section {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.help-btn,
+.sign-out-btn {
+  background: #007aff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.3rem;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.help-btn:hover,
+.sign-out-btn:hover {
+  background: #005bb5;
+}

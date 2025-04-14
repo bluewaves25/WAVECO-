@@ -1,0 +1,116 @@
+/* src/styles/Auth.css */
+.auth-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    padding: 1rem;
+    border-radius: 0.3rem;
+    width: 20rem;
+    max-width: 320px;
+    z-index: 1200;
+    box-shadow: 0 0 1rem rgba(0, 212, 255, 0.4);
+  }
+  
+  .app.light .auth-modal {
+    background: rgba(0, 0, 0, 0.05);
+    box-shadow: 0 0 1rem rgba(0, 139, 186, 0.4);
+  }
+  
+  .modern-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .modern-form h2 {
+    font-size: 1.5rem;
+    text-align: center;
+  }
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .form-group input,
+  .form-group select {
+    padding: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: #fff;
+    border-radius: 0.3rem;
+    font-size: 0.9rem;
+  }
+  
+  .app.light .form-group input,
+  .app.light .form-group select {
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    color: #000;
+  }
+  
+  .form-group input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+  
+  .app.light .form-group input::placeholder {
+    color: rgba(0, 0, 0, 0.5);
+  }
+  
+  .auth-submit {
+    background: #00d4ff;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 0.3rem;
+    color: #000;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  .app.light .auth-submit {
+    background: #008cba;
+    color: #fff;
+  }
+  
+  .auth-submit:hover {
+    background: #00b8e6;
+  }
+  
+  .app.light .auth-submit:hover {
+    background: #006d8f;
+  }
+  
+  .auth-switch {
+    font-size: 0.8rem;
+    text-align: center;
+  }
+  
+  .auth-switch button {
+    background: none;
+    border: none;
+    color: #00d4ff;
+    cursor: pointer;
+  }
+  
+  .app.light .auth-switch button {
+    color: #008cba;
+  }
+  
+  .forgot-password {
+    font-size: 0.8rem;
+    text-align: center;
+  }
+  
+  .forgot-password button {
+    background: none;
+    border: none;
+    color: #00d4ff;
+    cursor: pointer;
+  }
+  
+  .app.light .forgot-password button {
+    color: #008cba;
+  }

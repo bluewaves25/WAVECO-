@@ -1,0 +1,51 @@
+.app {
+  min-height: 100vh;
+  background: #1f2528 !important;
+  color: #d1d5db;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow: hidden;
+}
+
+.app.light {
+  background: #ffffff !important;
+  color: #333333;
+}
+
+.app.light h1,
+.app.light h2,
+.app.light h3 {
+  color: #333333;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.app.light p,
+.app.light span {
+  color: #4b5563;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.app.light button,
+.app.light input {
+  background: #ffffff;
+  color: #333333;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.3s ease;
+}
+
+.app.light button:hover {
+  background: #007aff;
+  color: #ffffff;
+}
+
+.wav {
+  color: #007aff;
+}
+
+.Eco {
+  color: #d1d5db;
+}

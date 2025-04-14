@@ -1,0 +1,77 @@
+.socials-container {
+    width: 100%;
+    max-width: 1200px;
+    max-height: calc(100vh - 8rem);
+    overflow: hidden;
+    background: #1f2528;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    color: #d1d5db;
+  }
+  
+  .app.light .socials-container {
+    background: #ffffff !important;
+    color: #333333;
+  }
+  
+  .socials-top {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    background: linear-gradient(to bottom, #3a4147, #4a555e);
+  }
+  
+  .app.light .socials-top {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    background: linear-gradient(to bottom, #ebedf0, #d5d8dc) !important;
+  }
+  
+  .socials-top span {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  
+  .socials-nav {
+    display: flex;
+    justify-content: space-around;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(to bottom, #3a4147, #4a555e);
+  }
+  
+  .app.light .socials-nav {
+    background: linear-gradient(to bottom, #ebedf0, #d5d8dc) !important;
+  }
+  
+  .socials-nav-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #d1d5db;
+    cursor: pointer;
+    border-radius: 0.3rem;
+    transition: background 0.3s ease;
+  }
+  
+  .app.light .socials-nav-item {
+    color: #333333;
+  }
+  
+  .socials-nav-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .app.light .socials-nav-item:hover {
+    background: rgba(0, 0, 0, 0.1);
+  }
+  
+  .socials-nav-item.active {
+    background: #007aff;
+    color: #ffffff;
+  }
+  
+  .socials-content {
+    flex-grow: 1;
+    padding: 1rem;
+    overflow-y: hidden;
+  }

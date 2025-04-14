@@ -1,0 +1,116 @@
+.signup-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #1f2528;
+  color: #d1d5db;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.app.light .signup-container {
+  background: #ffffff !important;
+  color: #333333;
+}
+
+.signup-logo {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
+}
+
+.signup-title {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.signup-title .wav {
+  color: #007aff;
+}
+
+.signup-title .Eco {
+  color: #d1d5db;
+}
+
+.app.light .signup-title .Eco {
+  color: #333333;
+}
+
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 320px;
+  gap: 1rem;
+}
+
+.signup-input {
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  outline: none;
+}
+
+.app.light .signup-input {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  color: #333333;
+}
+
+.signup-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.app.light .signup-input::placeholder {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.signup-button {
+  background: #007aff;
+  color: #ffffff;
+  border: none;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.signup-button:hover {
+  background: #005bb5;
+}
+
+.signup-error {
+  color: #ff3b30;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.signup-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.signup-footer p {
+  font-size: 0.9rem;
+  color: #9ca3af;
+}
+
+.app.light .signup-footer p {
+  color: #6b7280;
+}
+
+.signup-footer a {
+  color: #007aff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.signup-footer a:hover {
+  text-decoration: underline;
+}
