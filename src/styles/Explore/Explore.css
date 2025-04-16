@@ -1,0 +1,62 @@
+.explore {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 1rem;
+  background: linear-gradient(to bottom, #3a4147, #4a555e);
+  min-height: calc(100vh - 120px - 42px);
+  overflow: auto;
+}
+
+.app.light .explore {
+  background: linear-gradient(to bottom, #ebedf0, #d5d8dc);
+}
+
+.explore-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #d1d5db;
+  margin: 0 0 0.5rem;
+  text-align: center;
+}
+
+.app.light .explore-title {
+  color: #333333;
+}
+
+.explore-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  position: sticky;
+  top: 0;
+  background: inherit;
+  z-index: 10;
+  padding: 0.5rem 0;
+}
+
+.explore-tabs button {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: #4a555e;
+  color: #d1d5db;
+  border-radius: 0.3rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.app.light .explore-tabs button {
+  background: #d5d8dc;
+  color: #333333;
+}
+
+.explore-tabs button.active,
+.explore-tabs button:hover {
+  background: #007aff;
+  color: #ffffff;
+}
+
+.explore-content {
+  flex: 1;
+}

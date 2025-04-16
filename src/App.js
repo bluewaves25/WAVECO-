@@ -8,6 +8,29 @@ import SignIn from './components/SignIn';
 import SignUp from './components/SignUp';
 import WelcomePage from './components/WelcomePage';
 import Dashboard from './components/Dashboard/Dashboard';
+import Explore from './components/Socials/ExploreTab/Explore';
+
+function PrivateRoute({ user, children }) {
+  return user ? children : <Navigate to="/" />;
+}
+
+function ErrorBoundary({ children }) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const handleError = (error) => {
+      console.error('ErrorBoundary:', error);
+      setHasError(true);
+    };
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+
+  if (hasError) {
+    return <h1>Something went wrong. Please refresh.</h1>;
+  }
+  return children;
+}
 
 function AuthForm({ theme }) {
   const [isSignInMode, setIsSignInMode] = useState(false);
@@ -22,10 +45,25 @@ function AuthForm({ theme }) {
     const { email, password } = signUpData;
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      console.log('Sign-in successful, navigating to /welcome');
       navigate('/welcome');
     } catch (error) {
-      console.error('SignIn Error:', error.code, error.message);
-      alert('Sign-in failed: ' + error.message);
+      console.error('SignIn Error:', {
+        code: error.code,
+        message: error.message,
+        email,
+      });
+      let errorMessage = 'Sign-in failed';
+      if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email format';
+      } else if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many attempts, try again later';
+      }
+      alert(`${errorMessage}. Error code: ${error.code}`);
     }
   };
 
@@ -38,6 +76,7 @@ function AuthForm({ theme }) {
       await setDoc(doc(db, 'users', user.uid), {
         fullName, dob, country, email, hobbies, createdAt: new Date().toISOString()
       });
+      console.log('Sign-up successful, navigating to /welcome');
       navigate('/welcome');
     } catch (error) {
       console.error('SignUp Error:', error.code, error.message);
@@ -149,28 +188,6 @@ function AuthForm({ theme }) {
   );
 }
 
-function PrivateRoute({ user, children }) {
-  return user ? children : <Navigate to="/" />;
-}
-
-function ErrorBoundary({ children }) {
-  const [hasError, setHasError] = useState(false);
-
-  useEffect(() => {
-    const handleError = (error) => {
-      console.error('ErrorBoundary:', error);
-      setHasError(true);
-    };
-    window.addEventListener('error', handleError);
-    return () => window.removeEventListener('error', handleError);
-  }, []);
-
-  if (hasError) {
-    return <h1>Something went wrong. Please refresh.</h1>;
-  }
-  return children;
-}
-
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -189,6 +206,10 @@ function App() {
     return unsubscribe;
   }, []);
 
+  useEffect(() => {
+    console.log('App Theme:', theme);
+  }, [theme]);
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -200,8 +221,9 @@ function App() {
           <Routes>
             <Route path="/" element={<AuthForm theme={theme} />} />
             <Route path="/welcome" element={<WelcomePage theme={theme} />} />
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/signup" element={<SignUp />} />
+            <Route path="/signin" element={<SignIn theme={theme} />} />
+            <Route path="/signup" element={<SignUp theme={theme} />} />
+            <Route path="/explore" element={<Explore theme={theme} user={user} />} />
             <Route
               path="/dashboard"
               element={

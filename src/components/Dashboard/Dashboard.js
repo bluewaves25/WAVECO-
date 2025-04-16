@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
-import {
-  FaComments, FaDollarSign, FaBriefcase, FaShoppingCart, FaGamepad, FaGlobe,
-} from 'react-icons/fa';
-import { auth, db, storage } from '../../firebase';
-import {
-  collection, getDocs, onSnapshot, query, orderBy, getDoc, doc, updateDoc, addDoc, increment,
-} from 'firebase/firestore';
+import { collection, getDocs, onSnapshot, query, orderBy, getDoc, doc, updateDoc, addDoc, increment } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../../firebase';
 import ProfilePanel from '../Profile/ProfilePanel';
-import SocialsSection from '../Socials/SocialsSection';
 import Header from './Header';
+import Nav from './Nav';
+import Footer from './Footer';
+import WalletPopup from './WalletPopup';
+import ProfileModal from './ProfileModal';
+import MainContent from './MainContent';
 import '../../styles/App.css';
 import '../../styles/Dashboard.css';
 import '../../styles/Socials.css';
@@ -17,14 +16,16 @@ import '../../styles/Chat.css';
 import '../../styles/Market.css';
 import '../../styles/Profile.css';
 
-const Dashboard = ({ user, navigate, theme, setTheme, initialSection = 'Socials' }) => {
+const Dashboard = ({ user, theme, setTheme, initialSection = 'Socials' }) => {
   const [activeSection, setActiveSection] = useState(initialSection);
+  const [activeTab, setActiveTab] = useState('Chats');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [userData, setUserData] = useState(null);
   const [users, setUsers] = useState([]);
   const [groups, setGroups] = useState([]);
+  const [posts, setPosts] = useState([]);
   const [profilePic, setProfilePic] = useState('https://via.placeholder.com/80');
   const [selectedUser, setSelectedUser] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -35,13 +36,15 @@ const Dashboard = ({ user, navigate, theme, setTheme, initialSection = 'Socials'
   const [amount, setAmount] = useState('');
   const [transactionHistory, setTransactionHistory] = useState([]);
   const [isWalletLoading, setIsWalletLoading] = useState(false);
-  const [posts, setPosts] = useState([]);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [isChatsScrolled, setIsChatsScrolled] = useState(false);
   const fileInputRef = useRef(null);
-  const notificationRef = useRef(null); // Added
+  const notificationRef = useRef(null);
+  const mainRef = useRef(null);
 
   useEffect(() => {
     if (!user || !user.uid) {
-      navigate('/');
+      window.location.href = '/';
       return;
     }
     const fetchData = async () => {
@@ -82,7 +85,7 @@ const Dashboard = ({ user, navigate, theme, setTheme, initialSection = 'Socials'
       }
     };
     fetchData();
-  }, [user, navigate]);
+  }, [user]);
 
   useEffect(() => {
     if (!user || !user.uid) return;
@@ -104,10 +107,42 @@ const Dashboard = ({ user, navigate, theme, setTheme, initialSection = 'Socials'
       }
     };
     document.addEventListener('click', handleClickOutside);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
+    return () => document.removeEventListener('click', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!mainRef.current) return;
+      const scrollTop = mainRef.current.scrollTop;
+      setIsHeaderVisible(scrollTop <= 0);
+      if (activeSection === 'Socials' && activeTab === 'Chats') {
+        setIsChatsScrolled(scrollTop > 50);
+      }
+    };
+
+    const handleMouseMove = (e) => {
+      if (e.clientY <= 50) {
+        setIsHeaderVisible(true);
+      }
+    };
+
+    const mainElement = mainRef.current;
+    if (mainElement) {
+      mainElement.addEventListener('scroll', handleScroll);
+      window.addEventListener('mousemove', handleMouseMove);
+    }
+
+    return () => {
+      if (mainElement) {
+        mainElement.removeEventListener('scroll', handleScroll);
+      }
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [activeSection, activeTab]);
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
   const handleSectionClick = (section) => {
     setActiveSection(section);
@@ -210,192 +245,77 @@ const Dashboard = ({ user, navigate, theme, setTheme, initialSection = 'Socials'
     }
   };
 
-  const renderSection = () => {
-    switch (activeSection) {
-      case 'Socials':
-        return (
-          <div className="section-container">
-            <SocialsSection
-              user={user}
-              userData={userData}
-              users={users}
-              setActiveSection={setActiveSection}
-              handleUserClick={handleUserClick}
-              hasPosts={posts.length > 0}
-              posts={posts}
-              theme={theme}
-            />
-          </div>
-        );
-      case 'Earn':
-        return (
-          <div className="section-container">
-            <div className="content-area">
-              <h3>Earn ZEST</h3>
-              <p>Complete quests to earn rewards.</p>
-            </div>
-          </div>
-        );
-      case 'Work':
-        return (
-          <div className="section-container">
-            <div className="content-area">
-              <h3>Work Projects</h3>
-              <p>Manage your tasks and collaborations.</p>
-            </div>
-          </div>
-        );
-      case 'Market':
-        return (
-          <div className="section-container">
-            <div className="content-area">
-              <h3>Market & Gallery</h3>
-              <p>Browse items and artist showcases.</p>
-            </div>
-          </div>
-        );
-      case 'Arcade':
-        return (
-          <div className="section-container">
-            <div className="content-area">
-              <h3>Arcade & Vault</h3>
-              <p>Play games and view NFTs.</p>
-            </div>
-          </div>
-        );
-      case 'Nexus':
-        return (
-          <div className="section-container">
-            <div className="content-area">
-              <h3>Nexus Hub</h3>
-              <p>Access voice commands and network.</p>
-            </div>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
-  if (!user) {
-    navigate('/');
-    return null;
-  }
-
   return (
     <div className={`app ${theme}`}>
       <div className="dashboard-container">
         <Header
-          navigate={navigate}
+          theme={theme}
+          toggleTheme={toggleTheme}
+          profilePic={profilePic}
+          setIsProfileOpen={setIsProfileOpen}
+          notifications={notifications}
+          isNotificationOpen={isNotificationOpen}
+          setIsNotificationOpen={setIsNotificationOpen}
+          setShowWalletPopup={setShowWalletPopup}
+          notificationRef={notificationRef}
+          isHeaderVisible={isHeaderVisible}
+        />
+        <Nav activeSection={activeSection} handleSectionClick={handleSectionClick} isChatsScrolled={isChatsScrolled} />
+        <MainContent
+          activeSection={activeSection}
+          user={user}
+          userData={userData}
+          users={users}
+          setActiveSection={setActiveSection}
+          handleUserClick={handleUserClick}
+          posts={posts}
+          theme={theme}
+          mainRef={mainRef}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          isChatsScrolled={isChatsScrolled}
+          setIsChatsScrolled={setIsChatsScrolled}
+        />
+        <Footer
+          activeSection={activeSection}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        />
+        <ProfilePanel
+          user={user}
+          userData={userData}
+          theme={theme}
+          setTheme={setTheme}
           profilePic={profilePic}
           setProfilePic={setProfilePic}
-          notifications={notifications}
+          isProfileOpen={isProfileOpen}
           setIsProfileOpen={setIsProfileOpen}
-          setShowWalletPopup={setShowWalletPopup}
-          setIsNotificationOpen={setIsNotificationOpen}
-          handleProfilePicUpload={handleProfilePicUpload}
-          handleSectionClick={handleSectionClick}
-          activeSection={activeSection}
+          walletBalance={walletBalance}
+          walletAddress={walletAddress}
+          transactionHistory={transactionHistory}
+          setWalletBalance={setWalletBalance}
+          setTransactionHistory={setTransactionHistory}
         />
-        <main className="dashboard-main">{renderSection()}</main>
+        <ProfileModal
+          showProfileModal={showProfileModal}
+          setShowProfileModal={setShowProfileModal}
+          selectedUser={selectedUser}
+        />
+        <WalletPopup
+          showWalletPopup={showWalletPopup}
+          setShowWalletPopup={setShowWalletPopup}
+          walletBalance={walletBalance}
+          walletAddress={walletAddress}
+          isWalletLoading={isWalletLoading}
+          handleWalletAction={handleWalletAction}
+          recipient={recipient}
+          setRecipient={setRecipient}
+          amount={amount}
+          setAmount={setAmount}
+          transactionHistory={transactionHistory}
+          user={user}
+        />
       </div>
-      <ProfilePanel
-        user={user}
-        userData={userData}
-        navigate={navigate}
-        theme={theme}
-        setTheme={setTheme}
-        profilePic={profilePic}
-        setProfilePic={setProfilePic}
-        isProfileOpen={isProfileOpen}
-        setIsProfileOpen={setIsProfileOpen}
-        walletBalance={walletBalance}
-        walletAddress={walletAddress}
-        transactionHistory={transactionHistory}
-        setWalletBalance={setWalletBalance}
-        setTransactionHistory={setTransactionHistory}
-      />
-      {showProfileModal && (
-        <div className="profile-modal">
-          <button className="profile-modal-close" onClick={() => setShowProfileModal(false)}>
-            ✖
-          </button>
-          <div className="profile-modal-header">
-            <img src={selectedUser.avatar} alt="avatar" className="profile-modal-avatar" />
-            <span className="profile-modal-username">{selectedUser.username}</span>
-          </div>
-          <p className="profile-modal-about">{selectedUser.about}</p>
-          <button
-            className="sign-out-btn"
-            onClick={() => auth.signOut().then(() => navigate('/'))}
-          >
-            Sign Out
-          </button>
-        </div>
-      )}
-      {showWalletPopup && walletAddress && (
-        <div className="wallet-popup">
-          <button className="wallet-close" onClick={() => setShowWalletPopup(false)}>
-            ✖
-          </button>
-          <h3>Zest Wallet</h3>
-          <p>Balance: {walletBalance} ZEST</p>
-          <p>Address: {walletAddress.slice(0, 8)}...</p>
-          <div className="wallet-actions">
-            <button onClick={() => handleWalletAction('send')} disabled={isWalletLoading}>
-              {isWalletLoading ? 'Processing...' : 'Send'}
-            </button>
-            <button onClick={() => handleWalletAction('deposit')} disabled={isWalletLoading}>
-              {isWalletLoading ? 'Processing...' : 'Deposit'}
-            </button>
-            <button onClick={() => handleWalletAction('receive')} disabled={isWalletLoading}>
-              {isWalletLoading ? 'Processing...' : 'Receive'}
-            </button>
-            <button onClick={() => handleWalletAction('withdraw')} disabled={isWalletLoading}>
-              {isWalletLoading ? 'Processing...' : 'Withdraw'}
-            </button>
-            <button onClick={() => handleWalletAction('earn')} disabled={isWalletLoading}>
-              {isWalletLoading ? 'Processing...' : 'Earn'}
-            </button>
-          </div>
-          <div className="wallet-form">
-            <input
-              type="text"
-              placeholder="Recipient Address"
-              value={recipient}
-              onChange={(e) => setRecipient(e.target.value)}
-              disabled={isWalletLoading}
-            />
-            <input
-              type="number"
-              placeholder="Amount"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              min="0"
-              step="0.01"
-              disabled={isWalletLoading}
-            />
-          </div>
-          <div className="wallet-history">
-            <h4>Transaction History</h4>
-            {transactionHistory.length > 0 ? (
-              <ul>
-                {transactionHistory.slice(0, 5).map((tx) => (
-                  <li key={tx.id}>
-                    {tx.from === user.uid ? 'Sent' : 'Received'} {tx.amount} ZEST
-                    {tx.from === user.uid ? ' to ' : ' from '}
-                    {tx.from === user.uid ? tx.to.slice(0, 8) : tx.from.slice(0, 8)}...
-                    <br />
-                    <small>{new Date(tx.timestamp).toLocaleString()}</small>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>No transactions yet</p>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -1,7 +1,22 @@
-/* src/styles/Global.css */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: 'Arial', sans-serif;
-  }
+:root {
+  --bg-light: linear-gradient(to bottom, #ebedf0, #d5d8dc);
+  --bg-dark: linear-gradient(to bottom, #3a4147, #4a555e);
+  --accent-light: #28a745;
+  --accent-dark: #00ff88;
+}
+
+[data-theme="light"] {
+  --bg: var(--bg-light);
+  --accent: var(--accent-light);
+}
+
+[data-theme="dark"] {
+  --bg: var(--bg-dark);
+  --accent: var(--accent-dark);
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.8; }
+}

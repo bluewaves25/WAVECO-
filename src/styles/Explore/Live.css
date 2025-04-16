@@ -1,0 +1,67 @@
+.live-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.live-video {
+  position: relative;
+  background: #2a2f34;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+.app.light .live-video {
+  background: #c1c4c9;
+}
+.live-video-player {
+  width: 100%;
+  aspect-ratio: 9/16;
+  object-fit: cover;
+}
+.live-tools {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.live-tools button {
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  border: none;
+  border-radius: 0.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+}
+.live-tools button:hover {
+  background: #007aff;
+}
+.live-overlay {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+  color: #ffffff;
+  font-size: 0.8rem;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 0.3rem;
+  border-radius: 0.3rem;
+}
+.pinned-comment {
+  position: absolute;
+  bottom: 50px;
+  left: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  padding: 0.5rem;
+  border-radius: 0.3rem;
+  font-size: 0.8rem;
+}

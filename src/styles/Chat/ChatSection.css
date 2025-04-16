@@ -1,0 +1,249 @@
+.socials-tab {
+    padding: 1rem;
+  }
+  
+  .chat-toggle {
+    background: #007aff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.3rem;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  .chat-section {
+    width: 100%;
+    min-height: calc(100vh - 120px - 42px); /* Header (120px) + Footer (42px) */
+    background: linear-gradient(to bottom, #3a4147, #4a555e);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  .app.light .chat-section {
+    background: linear-gradient(to bottom, #ebedf0, #d5d8dc);
+  }
+  
+  .chat-tabs {
+    display: flex;
+    justify-content: space-around;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .app.light .chat-tabs {
+    background: rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  }
+  
+  .tab-btn {
+    background: none;
+    border: none;
+    padding: 0.5rem 1rem;
+    color: #d1d5db;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+  }
+  
+  .tab-btn:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 20%;
+    height: 60%;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.3);
+  }
+  
+  .app.light .tab-btn:not(:last-child)::after {
+    background: rgba(0, 0, 0, 0.3);
+  }
+  
+  .app.light .tab-btn {
+    color: #333333;
+  }
+  
+  .tab-btn.active {
+    color: #007aff;
+  }
+  
+  .tab-btn:hover {
+    color: #007aff;
+  }
+  
+  .unread-badge {
+    background: #ff3b30;
+    color: #ffffff;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 5px;
+  }
+  
+  .mark-read-btn {
+    background: #007aff;
+    border: none;
+    padding: 0.3rem 0.6rem;
+    color: #ffffff;
+    border-radius: 0.3rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  
+  .mark-read-btn:hover {
+    background: #005bb5;
+  }
+  
+  .chat-list {
+    flex-grow: 1;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    animation: fadeIn 0.3s ease-in;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  .chat-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 10px;
+    transition: background 0.2s;
+  }
+  
+  .chat-user:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .profile-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    color: #d1d5db;
+    cursor: pointer;
+  }
+  
+  .app.light .profile-icon {
+    color: #333333;
+  }
+  
+  .chat-user-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .chat-username {
+    font-weight: 600;
+    color: #d1d5db;
+    font-size: 1rem;
+  }
+  
+  .app.light .chat-username {
+    color: #333333;
+  }
+  
+  .chat-user p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+  }
+  
+  .app.light .chat-user p {
+    color: rgba(0, 0, 0, 0.6);
+  }
+  
+  .community-search {
+    padding: 0.5rem;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: #d1d5db;
+    border-radius: 0.3rem;
+    font-size: 0.9rem;
+    margin: 0.5rem;
+  }
+  
+  .app.light .community-search {
+    background: rgba(0, 0, 0, 0.1);
+    color: #333333;
+  }
+  
+  .community-search::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+  
+  .app.light .community-search::placeholder {
+    color: rgba(0, 0, 0, 0.5);
+  }
+  
+  .chat-room {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  
+  .back-button {
+    background: none;
+    border: none;
+    color: #d1d5db;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px;
+  }
+  
+  .app.light .back-button {
+    color: #333333;
+  }
+  
+  .back-button:hover {
+    color: #007aff;
+  }
+  
+  .hobbies-panel {
+    background: linear-gradient(to bottom, #3a4147, #4a555e);
+    padding: 1.5rem;
+    border-radius: 15px;
+    text-align: center;
+    margin: 1rem;
+    flex-grow: 1;
+  }
+  
+  .app.light .hobbies-panel {
+    background: linear-gradient(to bottom, #ebedf0, #d5d8dc);
+  }
+  
+  .hobbies-panel h3 {
+    margin: 0 0 1rem;
+    color: #d1d5db;
+    font-size: 1.2rem;
+  }
+  
+  .app.light .hobbies-panel h3 {
+    color: #333333;
+  }
+  
+  .hobbies-panel p {
+    margin: 0;
+    color: #d1d5db;
+    font-size: 0.9rem;
+  }
+  
+  .app.light .hobbies-panel p {
+    color: #333333;
+  }

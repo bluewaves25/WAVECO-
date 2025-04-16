@@ -1,0 +1,144 @@
+.text-chat {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .text-chat-top {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    background: linear-gradient(to bottom, #3a4147, #4a555e);
+    backdrop-filter: blur(8px);
+  }
+  
+  .app.light .text-chat-top {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    background: linear-gradient(to bottom, #ebedf0, #d5d8dc);
+  }
+  
+  .text-chat-top span {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  
+  .text-chat-content {
+    flex-grow: 1;
+    padding: 1rem;
+    overflow-y: auto;
+  }
+  
+  .message {
+    padding: 0.5rem;
+    border-radius: 0.3rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    max-width: 70%;
+    backdrop-filter: blur(6px);
+  }
+  
+  .message.sent {
+    background: #007aff;
+    color: #ffffff;
+    margin-left: auto;
+  }
+  
+  .message.received {
+    background: rgba(255, 255, 255, 0.15);
+    color: #d1d5db;
+  }
+  
+  .app.light .message.received {
+    background: rgba(0, 0, 0, 0.15);
+    color: #333333;
+  }
+  
+  .message span {
+    display: block;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.6);
+  }
+  
+  .app.light .message span {
+    color: rgba(0, 0, 0, 0.6);
+  }
+  
+  .text-chat-bottom {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    background: linear-gradient(to bottom, #3a4147, #4a555e);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+  }
+  
+  .app.light .text-chat-bottom {
+    background: linear-gradient(to bottom, #ebedf0, #d5d8dc);
+    border-top: 1px solid rgba(0, 0, 0, 0.2);
+  }
+  
+  .text-chat-input {
+    flex-grow: 1;
+    padding: 0.5rem;
+    border: none;
+    background: transparent;
+    color: #d1d5db;
+    border-radius: 0.3rem;
+    font-size: 0.9rem;
+  }
+  
+  .app.light .text-chat-input {
+    color: #333333;
+  }
+  
+  .text-chat-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+  
+  .app.light .text-chat-input::placeholder {
+    color: rgba(0, 0, 0, 0.5);
+  }
+  
+  .text-chat-send {
+    background: #007aff;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 0.3rem;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  .text-chat-send:hover {
+    background: #005bb5;
+  }
+  
+  .text-chat-action {
+    background: none;
+    border: none;
+    color: #d1d5db;
+    cursor: pointer;
+  }
+  
+  .app.light .text-chat-action {
+    color: #333333;
+  }
+  
+  .text-chat-action:hover {
+    color: #007aff;
+  }
+  
+  .text-chat-back {
+    background: none;
+    color: #d1d5db;
+    margin-right: 0.5rem;
+  }
+  
+  .app.light .text-chat-back {
+    color: #333333;
+  }
+  
+  .text-chat-back:hover {
+    color: #007aff;
+  }

@@ -1,0 +1,46 @@
+.voice-chat {
+    padding: 1rem;
+  }
+  
+  .voice-control {
+    backdrop-filter: blur(12px);
+    border-radius: 50px;
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: linear-gradient(to bottom, #3a4147, #4a555e);
+  }
+  
+  .app.light .voice-control {
+    background: linear-gradient(to bottom, #ebedf0, #d5d8dc);
+  }
+  
+  .voice-control button {
+    border: none;
+    border-radius: 20px;
+    padding: 8px 15px;
+    background: rgba(255, 255, 255, 0.8);
+    color: #333;
+  }
+  
+  .app.light .voice-control button {
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+  }
+  
+  .speaker-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #28a745;
+    animation: pulse 1.5s infinite;
+  }
+  
+  .app.light .speaker-dot {
+    background: #28a745;
+  }
+  
+  [data-theme="dark"] .speaker-dot {
+    background: #00ff88;
+  }

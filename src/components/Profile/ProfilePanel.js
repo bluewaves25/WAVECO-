@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  FaAngleLeft, FaMoon, FaSun, FaWallet, FaCubes, FaCog, FaQuestionCircle, FaSignOutAlt
+  FaAngleLeft, FaWallet, FaCubes, FaCog, FaQuestionCircle, FaSignOutAlt, FaSun, FaMoon
 } from 'react-icons/fa';
 import { GoHomeFill } from 'react-icons/go';
-import { auth, db, increment, doc, getDoc, updateDoc, addDoc, collection } from '../../firebase'; // Adjusted path
-import '../../styles/Profile.css'; // Adjusted path
-
-// ... rest of the ProfilePanel.js code remains unchanged ...
+import { CgProfile } from 'react-icons/cg';
+import { auth, db, increment, doc, getDoc, updateDoc, addDoc, collection } from '../../firebase';
+import '../../styles/Profile.css';
 
 const CustomQRCode = ({ value, size = 100 }) => {
   const canvasRef = useRef(null);
@@ -27,7 +26,7 @@ const CustomQRCode = ({ value, size = 100 }) => {
 };
 
 const ProfilePanel = ({
-  user, userData, navigate, theme, setTheme, profilePic, setProfilePic, isProfileOpen, setIsProfileOpen,
+  user, userData, theme, setTheme, profilePic, setProfilePic, isProfileOpen, setIsProfileOpen,
   walletBalance, walletAddress, transactionHistory, setWalletBalance, setTransactionHistory
 }) => {
   const [walletExpanded, setWalletExpanded] = useState(false);
@@ -48,22 +47,6 @@ const ProfilePanel = ({
   }, [setIsProfileOpen]);
 
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
-
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault();
-    const fullName = e.target.fullName.value;
-    const email = e.target.email.value;
-    try {
-      await updateDoc(doc(db, 'users', user.uid), { fullName });
-      if (email !== user.email) {
-        await auth.currentUser.updateEmail(email);
-      }
-      alert('Profile updated');
-    } catch (error) {
-      console.error('Update profile error:', error.message);
-      alert('Failed to update profile');
-    }
-  };
 
   const validateUUID = (id) => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -115,7 +98,7 @@ const ProfilePanel = ({
           alert('Withdraw initiated (redirect to withdrawal form)');
           break;
         case 'earn':
-          navigate('/dashboard?section=Earn');
+          window.location.href = '/dashboard?section=Earn';
           break;
         default:
           break;
@@ -133,7 +116,7 @@ const ProfilePanel = ({
       <div className="profile-header">
         <button className="back-btn" onClick={() => setIsProfileOpen(false)}><FaAngleLeft /></button>
         <div className="profile-upload">
-          <img src={profilePic} alt="Profile" className="profile-pic-large" />
+          <CgProfile className="profile-pic-large" />
           <span className="username">{userData?.fullName || user.email}</span>
           <span className="location">{userData?.country || 'targ: us'}</span>
         </div>
@@ -221,11 +204,26 @@ const ProfilePanel = ({
         </div>
         <div className="world-section">
           <span className="world-label">Current World: WAVECO Metaverse</span>
-          <button className="go-home-btn" onClick={() => navigate('/')}><GoHomeFill /> Go Home</button>
+          <button className="go-home-btn" onClick={() => window.location.href = '/'}><GoHomeFill /> Go Home</button>
         </div>
         <div className="profile-settings">
           <h3><FaCog className="settings-icon" /> Settings</h3>
-          <form onSubmit={handleUpdateProfile}>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const fullName = e.target.fullName.value;
+            const email = e.target.email.value;
+            updateDoc(doc(db, 'users', user.uid), { fullName })
+              .then(() => {
+                if (email !== user.email) {
+                  return auth.currentUser.updateEmail(email);
+                }
+              })
+              .then(() => alert('Profile updated'))
+              .catch(error => {
+                console.error('Update profile error:', error.message);
+                alert('Failed to update profile');
+              });
+          }}>
             <input
               name="fullName"
               type="text"
@@ -247,11 +245,19 @@ const ProfilePanel = ({
           <button className="help-btn" onClick={() => alert('Help/Support coming soon!')}>
             <FaQuestionCircle /> Help/Support
           </button>
-          <button className="sign-out-btn" onClick={() => auth.signOut().then(() => navigate('/'))}>
+          <button className="sign-out-btn" onClick={() => auth.signOut().then(() => window.location.href = '/')}>
             <FaSignOutAlt /> Log Out
           </button>
         </div>
       </div>
+      <footer className="profile-footer">
+        <div className="footer-links">
+          <a href="/about">About</a>
+          <a href="/terms">Terms</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/contact">Contact</a>
+        </div>
+      </footer>
     </div>
   );
 };

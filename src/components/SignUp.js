@@ -53,7 +53,7 @@ const SignUp = () => {
           placeholder="Full Name"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
-          className="signup-input"
+          className="futuristic-input"
           required
         />
         <input
@@ -61,7 +61,7 @@ const SignUp = () => {
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="signup-input"
+          className="futuristic-input"
           required
         />
         <input
@@ -69,11 +69,11 @@ const SignUp = () => {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="signup-input"
+          className="futuristic-input"
           required
         />
         {error && <p className="signup-error">{error}</p>}
-        <button type="submit" className="signup-button">Sign Up</button>
+        <button type="submit" className="futuristic-btn">Sign Up</button>
       </form>
       <div className="signup-footer">
         <p>

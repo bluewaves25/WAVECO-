@@ -43,7 +43,7 @@ const SignIn = () => {
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="signin-input"
+          className="futuristic-input"
           required
         />
         <input
@@ -51,11 +51,11 @@ const SignIn = () => {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="signin-input"
+          className="futuristic-input"
           required
         />
         {error && <p className="signin-error">{error}</p>}
-        <button type="submit" className="signin-button">Log In</button>
+        <button type="submit" className="futuristic-btn">Log In</button>
       </form>
       <div className="signin-footer">
         <p>

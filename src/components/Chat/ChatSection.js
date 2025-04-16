@@ -1,436 +1,272 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  FaAngleLeft, FaSearch, FaFileAlt, FaUserFriends, FaFileUpload, FaSmile, FaHandsHelping,
-  FaEllipsisV, FaBan, FaFlag, FaTrash, FaVideo, FaMicrophone, FaMicrophoneSlash,
-  FaShareSquare, FaUsers, FaCircle
-} from 'react-icons/fa';
-import { IoIosCall } from 'react-icons/io';
-import { db } from '../../firebase';
-import {
-  collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc, getDocs, getDoc
-} from 'firebase/firestore';
-import '../../styles/Chat.css';
+import React, { useState, useEffect } from 'react';
+import { CgProfile } from 'react-icons/cg';
+import Feed from './Feed';
+import { auth, db, collection, query, onSnapshot, getDocs, doc, getDoc } from '../../firebase';
+import '../../styles/chat/ChatSection.css';
 
-const CustomAvatar = ({ status }) => (
-  <div className={`avatar-status ${status}`}>
-    <FaCircle />
-  </div>
-);
-
-const ChatSection = ({ user, userData, users }) => {
-  const [chatMessages, setChatMessages] = useState([]);
-  const [chatRoomMessages, setChatRoomMessages] = useState([]);
-  const [chatInput, setChatInput] = useState('');
-  const [chatRoomInput, setChatRoomInput] = useState('');
-  const [isChatMenuOpen, setIsChatMenuOpen] = useState(false);
-  const [confirmation, setConfirmation] = useState(null);
-  const [selectedChat, setSelectedChat] = useState(null);
-  const [isTyping, setIsTyping] = useState(false);
-  const [isChatRoomOpen, setIsChatRoomOpen] = useState(false);
-  const [isCallActive, setIsCallActive] = useState(false);
-  const [callType, setCallType] = useState(null);
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
+const ChatSection = ({ theme, user }) => {
+  const [activeTab, setActiveTab] = useState('Private');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [newPost, setNewPost] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('public');
-  const [groups, setGroups] = useState([]);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const chatMenuRef = useRef(null);
-  const videoRef = useRef(null);
-  const messagesEndRef = useRef(null);
+  const [unreadCounts, setUnreadCounts] = useState({ Private: 0, Public: 0, Communities: 0, All: 0 });
+  const [privateChats, setPrivateChats] = useState([]);
+  const [publicChats, setPublicChats] = useState([]);
+  const [communities, setCommunities] = useState([]);
+  const [suggestedCommunities, setSuggestedCommunities] = useState([]);
 
   useEffect(() => {
-    const fetchGroups = async () => {
-      const groupsSnapshot = await getDocs(collection(db, 'groups'));
-      const groupList = groupsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setGroups(groupList);
-      if (selectedChat?.type === 'group') {
-        const groupDoc = await getDoc(doc(db, 'groups', selectedChat.id));
-        setIsAdmin(groupDoc.exists() && groupDoc.data().admin === user.uid);
+    if (!user) return;
+
+    const fetchPrivateChats = async () => {
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+        const following = userDoc.data()?.following || [];
+        const followers = userDoc.data()?.followers || [];
+        const mutuals = following.filter((uid) => followers.includes(uid));
+
+        const chats = [];
+        for (const uid of mutuals) {
+          const chatRef = doc(db, 'chats', `${user.uid}_${uid}`);
+          const chatDoc = await getDoc(chatRef);
+          const userData = await getDoc(doc(db, 'users', uid));
+          const userInfo = userData.data() || {};
+          const displayName = userInfo.displayName || userInfo.email || uid;
+          if (chatDoc.exists()) {
+            chats.push({
+              id: uid,
+              user: displayName,
+              hobbies: userInfo.hobbies || null,
+              lastMessage: chatDoc.data().lastMessage || '',
+              timestamp: chatDoc.data().timestamp?.toDate() || new Date(),
+              unread: chatDoc.data().unread?.[user.uid] || 0,
+              status: userInfo.status || 'offline',
+            });
+          }
+        }
+        console.log('Private Chats:', chats);
+        setPrivateChats(chats);
+        setUnreadCounts((prev) => ({ ...prev, Private: chats.reduce((sum, c) => sum + c.unread, 0) }));
+      } catch (error) {
+        console.error('Error fetching private chats:', error);
       }
     };
-    fetchGroups();
-  }, [selectedChat, user]);
 
-  useEffect(() => {
-    if (!selectedChat || !user || !user.uid) return;
-    let q;
-    if (selectedChat.type === 'group') {
-      q = query(collection(db, 'groups', selectedChat.id, 'messages'), orderBy('timestamp'));
-    } else {
-      q = query(collection(db, 'chats', `${user.uid}_${selectedChat.id}`, 'messages'), orderBy('timestamp'));
-    }
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setChatMessages(snapshot.docs.map(doc => doc.data()));
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    });
-    return () => unsubscribe();
-  }, [selectedChat, user]);
-
-  useEffect(() => {
-    if (!isChatRoomOpen || activeTab !== 'public') return;
-    const q = query(collection(db, 'chatRooms', 'global', 'messages'), orderBy('timestamp'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setChatRoomMessages(snapshot.docs.map(doc => doc.data()));
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    });
-    return () => unsubscribe();
-  }, [isChatRoomOpen, activeTab]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (chatMenuRef.current && !chatMenuRef.current.contains(event.target)) setIsChatMenuOpen(false);
+    const fetchPublicChats = async () => {
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+        const following = userDoc.data()?.following || [];
+        const allUsers = await getDocs(collection(db, 'users'));
+        const chats = [];
+        allUsers.forEach((doc) => {
+          if (doc.id !== user.uid && !following.includes(doc.id)) {
+            const userInfo = doc.data() || {};
+            const displayName = userInfo.displayName || userInfo.email || doc.id;
+            chats.push({
+              id: doc.id,
+              user: displayName,
+              hobbies: userInfo.hobbies || null,
+              lastMessage: '',
+              timestamp: new Date(),
+              unread: 0,
+              status: userInfo.status || 'offline',
+            });
+          }
+        });
+        console.log('Public Chats:', chats);
+        setPublicChats(chats);
+        setUnreadCounts((prev) => ({ ...prev, Public: chats.reduce((sum, c) => sum + c.unread, 0) }));
+      } catch (error) {
+        console.error('Error fetching public chats:', error);
+      }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
-  const sendMessage = async () => {
-    if (!chatInput.trim() || !selectedChat || !user) return;
-    try {
-      const collectionPath = selectedChat.type === 'group'
-        ? collection(db, 'groups', selectedChat.id, 'messages')
-        : collection(db, 'chats', `${user.uid}_${selectedChat.id}`, 'messages');
-      await addDoc(collectionPath, {
-        text: chatInput,
-        user: user.uid,
-        userName: userData?.fullName || user.email,
-        timestamp: new Date().toISOString()
-      });
-      setChatInput('');
-      setIsTyping(false);
-    } catch (error) {
-      console.error('Send message error:', error.message);
-    }
-  };
-
-  const sendChatRoomMessage = async () => {
-    if (!chatRoomInput.trim() || !user) return;
-    try {
-      await addDoc(collection(db, 'chatRooms', 'global', 'messages'), {
-        text: chatRoomInput,
-        userId: user.uid,
-        userName: userData?.fullName || user.email,
-        timestamp: new Date().toISOString()
-      });
-      setChatRoomInput('');
-    } catch (error) {
-      console.error('Send chat room message error:', error.message);
-    }
-  };
-
-  const handleTyping = (e) => {
-    setChatInput(e.target.value);
-    setIsTyping(!!e.target.value);
-  };
-
-  const startCall = async (type) => {
-    setCallType(type);
-    setIsCallActive(true);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: type === 'video',
-        audio: true
-      });
-      if (videoRef.current) videoRef.current.srcObject = stream;
-      console.log(`Starting ${type} call`);
-    } catch (error) {
-      console.error('Start call error:', error.message);
-      setIsCallActive(false);
-    }
-  };
-
-  const startScreenShare = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-      setIsScreenSharing(true);
-      if (videoRef.current) videoRef.current.srcObject = stream;
-      console.log('Screen sharing started');
-    } catch (error) {
-      console.error('Screen share error:', error.message);
-    }
-  };
-
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
-    console.log(`Microphone ${isMuted ? 'unmuted' : 'muted'}`);
-  };
-
-  const handleAdminAction = async (action, targetId) => {
-    if (!isAdmin) return;
-    try {
-      switch (action) {
-        case 'kick':
-          await updateDoc(doc(db, 'groups', selectedChat.id), {
-            members: selectedChat.members.filter(id => id !== targetId)
+    const communitiesQuery = query(collection(db, 'communities'));
+    const unsubscribeCommunities = onSnapshot(communitiesQuery, (snapshot) => {
+      const joined = [];
+      const suggested = [];
+      snapshot.forEach((doc) => {
+        const data = { id: doc.id, ...doc.data() };
+        const name = data.name || 'Community';
+        if (data.members?.includes(user.uid)) {
+          joined.push({
+            id: doc.id,
+            name,
+            lastMessage: data.lastMessage || '',
+            timestamp: data.timestamp?.toDate() || new Date(),
+            unread: data.unread?.[user.uid] || 0,
           });
-          break;
-        case 'ban':
-          await updateDoc(doc(db, 'groups', selectedChat.id), {
-            banned: [...(selectedChat.banned || []), targetId]
+        } else {
+          suggested.push({
+            id: doc.id,
+            name,
+            description: data.description || '',
           });
-          break;
-        default:
-          break;
-      }
-      console.log(`${action} user ${targetId}`);
-    } catch (error) {
-      console.error('Admin action error:', error.message);
-    }
+        }
+      });
+      console.log('Communities:', joined, 'Suggested:', suggested);
+      setCommunities(joined);
+      setSuggestedCommunities(suggested);
+      setUnreadCounts((prev) => ({ ...prev, Communities: joined.reduce((sum, c) => sum + c.unread, 0) }));
+    }, (error) => {
+      console.error('Error fetching communities:', error);
+    });
+
+    fetchPrivateChats();
+    fetchPublicChats();
+    return () => unsubscribeCommunities();
+  }, [user]);
+
+  const allChats = [...privateChats, ...publicChats, ...communities];
+
+  useEffect(() => {
+    setUnreadCounts((prev) => ({ ...prev, All: allChats.reduce((sum, c) => sum + c.unread, 0) }));
+  }, [privateChats, publicChats, communities]);
+
+  const handleTabSwitch = (tab) => {
+    setActiveTab(tab);
+    setSelectedUser(null);
   };
 
-  const handleAction = (action, targetId) => {
-    setIsChatMenuOpen(false);
-    if (action === 'kick' || action === 'ban') {
-      handleAdminAction(action, targetId);
-    } else {
-      setConfirmation(action);
-    }
+  const handleUserClick = (chat) => {
+    setSelectedUser(chat);
   };
 
-  const confirmAction = (confirmed) => {
-    if (confirmed && selectedChat) {
-      switch (confirmation) {
-        case 'block': setSelectedChat(null); break;
-        case 'report': break;
-        case 'clear': setChatMessages([]); break;
-        case 'delete': setChatMessages([]); setSelectedChat(null); break;
-        default: break;
-      }
-    }
-    setConfirmation(null);
+  const handleProfileClick = (chat) => {
+    setSelectedUser({ ...chat, showHobbies: true });
   };
 
-  const openChat = (chatUser, type = 'user') => {
-    setSelectedChat({ ...chatUser, type });
-    setIsChatRoomOpen(false);
-    setCallType(null);
-    setIsCallActive(false);
+  const handleMarkAllRead = (tab) => {
+    setUnreadCounts((prev) => ({ ...prev, [tab]: 0 }));
   };
 
-  const filteredUsers = () => {
-    if (activeTab === 'private') {
-      return users.filter(u => u.id !== user.uid && userData?.following?.includes(u.id));
-    }
-    return users.filter(u => u.id !== user.uid);
+  const handleSearchCommunity = (e) => {
+    setSearchQuery(e.target.value);
   };
 
-  const filteredGroups = () => {
-    if (activeTab === 'communities') {
-      return groups;
-    }
-    return groups.filter(g => g.members.includes(user.uid));
-  };
+  const filteredCommunities = communities.filter((group) =>
+    group.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredSuggested = suggestedCommunities.filter((group) =>
+    group.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div className="chat-section futuristic">
-      <div className="chat-header">
-        <span>Chats</span>
-        <div className="chat-search">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search chats..."
-            className="chat-search-input"
-          />
-          <FaSearch className="chat-action-btn" />
-        </div>
-      </div>
-      <div className="chat-tabs">
-        {['public', 'private', 'communities', 'all'].map(tab => (
-          <button
-            key={tab}
-            className={`chat-tab ${activeTab === tab ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
-      </div>
-      {!selectedChat && !isChatRoomOpen && (
-        <div className="chat-list">
-          {(activeTab === 'public' || activeTab === 'all') && (
-            <>
-              <div className="community-icon-tab">
-                <FaUserFriends className="tab-icon" />
-                <span>Public Chat Room</span>
-              </div>
-              <div className="chat-user futuristic" onClick={() => setIsChatRoomOpen(true)}>
-                <FaFileAlt className="post-avatar" />
-                <span className="post-username">Global Chat</span>
-                <CustomAvatar status="online" />
-              </div>
-            </>
-          )}
-          {(activeTab === 'public' || activeTab === 'private' || activeTab === 'all') && filteredUsers()
-            .filter(u => u.fullName.toLowerCase().includes(searchQuery.toLowerCase()))
-            .map(u => (
-              <div key={u.id} className="chat-user futuristic" onClick={() => openChat(u)}>
-                <img
-                  src={u.profilePic || 'https://via.placeholder.com/30'}
-                  alt={`${u.fullName}'s avatar`}
-                  className="post-avatar"
-                />
-                <span className="post-username">{u.fullName}</span>
-                <CustomAvatar status={u.status || 'offline'} />
-              </div>
+    <div className={`chat-section ${theme}`}>
+      {!selectedUser ? (
+        <>
+          <div className="chat-tabs">
+            {['Private', 'Public', 'Communities', 'All'].map((tab) => (
+              <button
+                key={tab}
+                className={`tab-btn ${activeTab === tab ? 'active' : ''}`}
+                onClick={() => handleTabSwitch(tab)}
+              >
+                {tab} {unreadCounts[tab] > 0 && <span className="unread-badge">{unreadCounts[tab]}</span>}
+              </button>
             ))}
-          {(activeTab === 'communities' || activeTab === 'all') && filteredGroups()
-            .filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()))
-            .map(g => (
-              <div key={g.id} className="chat-user futuristic" onClick={() => openChat({ ...g, type: 'group' })}>
-                <FaUsers className="post-avatar" />
-                <span className="post-username">{g.name}</span>
-                <CustomAvatar status="online" />
-              </div>
-            ))}
-        </div>
-      )}
-      {selectedChat && !isChatRoomOpen && (
-        <div className="chat-room full-screen futuristic">
-          <div className="chat-header">
-            <button className="chat-control-btn" onClick={() => setSelectedChat(null)}>
-              <FaAngleLeft />
+            <button className="mark-read-btn" onClick={() => handleMarkAllRead(activeTab)}>
+              Mark All Read
             </button>
-            <span className="chat-title">{selectedChat.fullName || selectedChat.name}</span>
-            <CustomAvatar status={selectedChat.status || 'online'} />
-            <div className="chat-controls">
-              <button className="chat-control-btn" onClick={() => startCall('audio')}>
-                <IoIosCall />
-              </button>
-              <button className="chat-control-btn" onClick={() => startCall('video')}>
-                <FaVideo />
-              </button>
-              <button className="chat-control-btn" onClick={startScreenShare}>
-                <FaShareSquare />
-              </button>
-              <div ref={chatMenuRef}>
-                <button
-                  className="chat-control-btn"
-                  onClick={() => setIsChatMenuOpen(!isChatMenuOpen)}
-                >
-                  <FaEllipsisV />
-                </button>
-                {isChatMenuOpen && (
-                  <div className="chat-menu">
-                    <button className="chat-menu-item" onClick={() => handleAction('block')}>
-                      <FaBan /> Block
-                    </button>
-                    <button className="chat-menu-item" onClick={() => handleAction('report')}>
-                      <FaFlag /> Report
-                    </button>
-                    <button className="chat-menu-item" onClick={() => handleAction('clear')}>
-                      <FaTrash /> Clear
-                    </button>
-                    <button className="chat-menu-item" onClick={() => handleAction('delete')}>
-                      <FaTrash /> Delete
-                    </button>
-                    {isAdmin && selectedChat.type === 'group' && (
-                      <>
-                        <button
-                          className="chat-menu-item"
-                          onClick={() => handleAction('kick', selectedChat.id)}
-                        >
-                          <FaBan /> Kick
-                        </button>
-                        <button
-                          className="chat-menu-item"
-                          onClick={() => handleAction('ban', selectedChat.id)}
-                        >
-                          <FaBan /> Ban
-                        </button>
-                      </>
-                    )}
+          </div>
+          <div className="chat-list">
+            {activeTab === 'Private' &&
+              privateChats.map((chat) => (
+                <div key={chat.id} className="chat-user" onClick={() => handleUserClick(chat)}>
+                  <CgProfile className="profile-icon" onClick={(e) => { e.stopPropagation(); handleProfileClick(chat); }} />
+                  <div className="chat-user-info">
+                    <span className="chat-username">{chat.user}</span>
+                    <p>{chat.lastMessage}</p>
+                    {chat.unread > 0 && <span className="unread-badge">{chat.unread}</span>}
                   </div>
-                )}
-              </div>
+                </div>
+              ))}
+            {activeTab === 'Public' &&
+              publicChats.map((chat) => (
+                <div key={chat.id} className="chat-user" onClick={() => handleUserClick(chat)}>
+                  <CgProfile className="profile-icon" onClick={(e) => { e.stopPropagation(); handleProfileClick(chat); }} />
+                  <div className="chat-user-info">
+                    <span className="chat-username">{chat.user}</span>
+                    <p>{chat.lastMessage}</p>
+                    {chat.unread > 0 && <span className="unread-badge">{chat.unread}</span>}
+                  </div>
+                </div>
+              ))}
+            {activeTab === 'Communities' && (
+              <>
+                <input
+                  type="text"
+                  className="community-search"
+                  placeholder="Search communities..."
+                  value={searchQuery}
+                  onChange={handleSearchCommunity}
+                />
+                {filteredCommunities.map((group) => (
+                  <div key={group.id} className="chat-user" onClick={() => handleUserClick(group)}>
+                    <CgProfile className="profile-icon" onClick={(e) => { e.stopPropagation(); handleProfileClick(group); }} />
+                    <div className="chat-user-info">
+                      <span className="chat-username">{group.name}</span>
+                      <p>{group.lastMessage}</p>
+                      {group.unread > 0 && <span className="unread-badge">{group.unread}</span>}
+                    </div>
+                  </div>
+                ))}
+                <h4>Suggested Communities</h4>
+                {filteredSuggested.map((group) => (
+                  <div key={group.id} className="chat-user">
+                    <CgProfile className="profile-icon" onClick={(e) => { e.stopPropagation(); handleProfileClick(group); }} />
+                    <div className="chat-user-info">
+                      <span className="chat-username">{group.name}</span>
+                      <p>{group.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+            {activeTab === 'All' &&
+              allChats.map((chat) => (
+                <div key={chat.id} className="chat-user" onClick={() => handleUserClick(chat)}>
+                  <CgProfile className="profile-icon" onClick={(e) => { e.stopPropagation(); handleProfileClick(chat); }} />
+                  <div className="chat-user-info">
+                    <span className="chat-username">{chat.user || chat.name}</span>
+                    <p>{chat.lastMessage}</p>
+                    {chat.unread > 0 && <span className="unread-badge">{chat.unread}</span>}
+                  </div>
+                </div>
+              ))}
+          </div>
+        </>
+      ) : (
+        <div className="chat-room">
+          <button className="back-button" onClick={() => setSelectedUser(null)}>
+            Back
+          </button>
+          {selectedUser.showHobbies ? (
+            <div className="hobbies-panel">
+              <h3>{selectedUser.user || selectedUser.name}</h3>
+              <p>
+                Hobbies:{' '}
+                {Array.isArray(selectedUser.hobbies)
+                  ? selectedUser.hobbies.join(', ')
+                  : typeof selectedUser.hobbies === 'string'
+                  ? selectedUser.hobbies
+                  : 'None'}
+              </p>
             </div>
-          </div>
-          {isCallActive && (
-            <div className="call-tab">
-              <video ref={videoRef} autoPlay playsInline className="call-video" />
-              <div className="call-controls">
-                <button onClick={toggleMute} className="call-control-btn">
-                  {isMuted ? <FaMicrophoneSlash /> : <FaMicrophone />}
-                </button>
-                {isScreenSharing && (
-                  <button onClick={() => setIsScreenSharing(false)} className="call-control-btn">
-                    <FaShareSquare /> Stop Share
-                  </button>
-                )}
-                <button onClick={() => setIsCallActive(false)} className="call-control-btn">
-                  End Call
-                </button>
-              </div>
-            </div>
-          )}
-          <div className="chat-messages">
-            {chatMessages.map((msg, i) => (
-              <div key={i} className={`chat-message ${msg.user === user?.uid ? 'user' : ''}`}>
-                <strong>{msg.userName}: </strong>{msg.text}
-              </div>
-            ))}
-            {isTyping && <div className="typing">Typing...</div>}
-            <div ref={messagesEndRef} />
-          </div>
-          <div className="chat-input-area">
-            <div className="chat-input-container">
-              <button className="chat-action-btn"><FaSmile /></button>
-              <input
-                type="text"
-                value={chatInput}
-                onChange={handleTyping}
-                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                placeholder="Type a message..."
-                className="chat-input"
-              />
-              <button className="chat-action-btn" onClick={sendMessage}>
-                Send
-              </button>
-              <button className="chat-action-btn"><FaHandsHelping /></button>
-              <button className="chat-action-btn"><FaFileUpload /></button>
-            </div>
-          </div>
-          {confirmation && (
-            <div className="confirmation-modal futuristic">
-              <p>Confirm {confirmation}?</p>
-              <button onClick={() => confirmAction(true)}>Yes</button>
-              <button onClick={() => confirmAction(false)}>No</button>
-            </div>
-          )}
-        </div>
-      )}
-      {isChatRoomOpen && (
-        <div className="chat-room full-screen futuristic">
-          <div className="chat-header">
-            <button className="chat-control-btn" onClick={() => setIsChatRoomOpen(false)}>
-              <FaAngleLeft />
-            </button>
-            <span className="chat-title">Global Chat Room</span>
-            <CustomAvatar status="online" />
-          </div>
-          <div className="chat-room-messages">
-            {chatRoomMessages.map((msg, i) => (
-              <div key={i} className="chat-room-message">
-                <strong>{msg.userName}: </strong>{msg.text}
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-          <div className="chat-input-area">
-            <input
-              type="text"
-              value={chatRoomInput}
-              onChange={(e) => setChatRoomInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && sendChatRoomMessage()}
-              placeholder="Type a message..."
-              className="chat-room-input"
+          ) : (
+            <Feed
+              user={user}
+              newPost={newPost}
+              setNewPost={setNewPost}
+              handleNewPost={() => console.log('New message:', newPost)}
+              theme={theme}
+              selectedUser={selectedUser}
+              handleProfileClick={handleProfileClick}
             />
-            <button className="chat-room-send" onClick={sendChatRoomMessage}>
-              Send
-            </button>
-          </div>
+          )}
         </div>
       )}
     </div>
